@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="bs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Kvit: besplatan program za fakture, predračune i ponude za firme u BiH. Podaci ostaju u vašem pregledniku.">
+<title>Kvit fakture</title>
+<style>
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: a supply shelf on the left (products, clients) and a sheet of invoice paper on the desk to the right; you drag from shelf to paper. */
+:root{
+  --bg:#eceef4; --surface:#ffffff; --surface-2:#e1e4ee; --fg:#1b1f2e; --muted:#5b6278; --line:#cbd0de;
+  --accent:#3b41c4; --accent-soft:#e1e2fa; --on-accent:#ffffff;
+  --good:#1d7a4c; --good-bg:#dcf2e6; --warn:#9c5600; --warn-bg:#fbead2; --bad:#b32234; --bad-bg:#fbe0e3;
+  --paper:#fffefa; --paper-ink:#1b1f2e; --paper-muted:#676d82; --paper-line:#dcdfe8; --stamp:#3b41c4; --stamp-soft:#eceefe;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#10121a; --surface:#191c27; --surface-2:#242837; --fg:#e6e8f0; --muted:#9aa0b7; --line:#2e3344;
+  --accent:#8e93ff; --accent-soft:#272a52; --on-accent:#10121a;
+  --good:#5ed29a; --good-bg:#16352a; --warn:#f0b25a; --warn-bg:#3a2a12; --bad:#ff8b99; --bad-bg:#3d1a21; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#10121a; --surface:#191c27; --surface-2:#242837; --fg:#e6e8f0; --muted:#9aa0b7; --line:#2e3344;
+  --accent:#8e93ff; --accent-soft:#272a52; --on-accent:#10121a;
+  --good:#5ed29a; --good-bg:#16352a; --warn:#f0b25a; --warn-bg:#3a2a12; --bad:#ff8b99; --bad-bg:#3d1a21; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg); color:var(--fg); font-family:var(--f-body); font-size:14px; line-height:1.45}
+.wrap{max-width:1240px; margin:0 auto; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px))}
+button,input,select,textarea{font:inherit; color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+/* top bar */
+.top{background:var(--surface); border-bottom:1px solid var(--line)}
+.topin{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding-block:12px}
+.brand{display:flex; align-items:baseline; gap:10px; font-family:var(--f-display); font-weight:700; font-size:22px; letter-spacing:-.01em}
+.brand small{font-family:var(--f-body); font-weight:400; font-size:13px; color:var(--muted); letter-spacing:0}
+.mark{display:inline-grid; place-items:center; width:30px; height:30px; border-radius:8px; background:var(--accent); color:var(--on-accent); font-size:17px; transform:rotate(-6deg); align-self:center}
+.tabs{display:flex; gap:4px; background:var(--surface-2); padding:4px; border-radius:10px}
+.tabs button{border:0; background:transparent; padding:7px 14px; border-radius:7px; color:var(--muted); font-weight:500}
+.tabs button.on{background:var(--surface); color:var(--fg); box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.count{font-family:var(--f-mono); font-size:12px; color:var(--muted)}
+
+main{padding-block:20px 48px}
+
+/* editor */
+.editor{display:grid; grid-template-columns:290px minmax(0,1fr); gap:24px; align-items:start}
+.palette{position:sticky; top:16px; display:flex; flex-direction:column; gap:10px; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px; max-height:calc(100vh - 32px); overflow:auto; transition:background .15s, border-color .15s}
+.palette h3{margin:6px 0 0; font-family:var(--f-display); font-size:16px; font-weight:700}
+.sub{margin:0; color:var(--muted); font-size:12.5px}
+.example{font-size:12.5px; background:var(--warn-bg); color:var(--warn); padding:8px 10px; border-radius:8px}
+.cards{display:flex; flex-direction:column; gap:6px}
+.card{display:flex; align-items:center; gap:8px; padding:8px 8px 8px 10px; background:var(--bg); border:1px solid var(--line); border-radius:9px; cursor:grab; user-select:none}
+.card:hover{border-color:var(--accent)}
+.card:active{cursor:grabbing}
+.card .grip{color:var(--muted); font-size:12px; letter-spacing:-2px}
+.card .meta{flex:1; min-width:0}
+.card .nm{display:block; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.card .dt{display:block; font-size:12px; color:var(--muted); font-family:var(--f-mono)}
+.card .act{border:1px solid var(--line); background:var(--surface); border-radius:7px; width:28px; height:28px; display:grid; place-items:center; color:var(--accent); font-weight:600; flex:none}
+.card .del{border:0; background:transparent; color:var(--muted); width:22px; flex:none; opacity:.0}
+.card:hover .del, .card:focus-within .del{opacity:1}
+.card.client .act{width:auto; padding:0 8px; font-size:12px}
+details{border-top:1px dashed var(--line); padding-top:8px}
+summary{cursor:pointer; color:var(--accent); font-weight:500; font-size:13px}
+.mini{display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px}
+.mini input,.mini select{grid-column:span 2; min-width:0}
+.mini .half{grid-column:span 1}
+.field, .mini input, .mini select{background:var(--bg); border:1px solid var(--line); border-radius:7px; padding:7px 9px}
+.btn{border:1px solid var(--line); background:var(--surface); border-radius:8px; padding:8px 14px; font-weight:500}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
+.btn.small{padding:5px 10px; font-size:13px}
+.mini .btn{grid-column:span 2}
+.csvtip{font-size:12.5px; color:var(--muted); border-top:1px dashed var(--line); padding-top:10px}
+.csvtip code{font-family:var(--f-mono); font-size:12px; background:var(--surface-2); padding:1px 4px; border-radius:4px}
+.removehint{display:none; text-align:center; padding:14px; border:2px dashed var(--bad); color:var(--bad); background:var(--bad-bg); border-radius:10px; font-weight:500}
+body.drag-line .removehint{display:block}
+.palette.over-remove{border-color:var(--bad)}
+
+.desk{display:flex; flex-direction:column; gap:12px; min-width:0}
+.toolbar{display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between}
+.toolbar .lft{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.toolbar label{color:var(--muted); font-size:13px}
+.toolbar select{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:7px 10px}
+
+/* paper */
+.paper{position:relative; color-scheme:light; background:var(--paper); color:var(--paper-ink); border-radius:4px; padding:clamp(18px, 4vw, 44px); box-shadow:0 1px 0 rgba(0,0,0,.04), 0 12px 32px -12px rgba(20,24,60,.28); transition:box-shadow .15s}
+.paper.over{box-shadow:0 0 0 3px var(--stamp), 0 12px 32px -12px rgba(20,24,60,.28)}
+.paper.over-files::after{content:"Pustite CSV fajl da dodate stavke"; position:absolute; inset:0; display:grid; place-items:center; background:rgba(236,238,254,.92); color:var(--stamp); font-family:var(--f-display); font-size:20px; font-weight:700; border-radius:4px}
+.p-head{display:flex; justify-content:space-between; gap:24px; flex-wrap:wrap; padding-bottom:20px; border-bottom:2px solid var(--paper-ink)}
+.seller .co{font-family:var(--f-display); font-weight:700; font-size:22px; letter-spacing:-.01em; margin:0 0 4px}
+.seller p{margin:0; color:var(--paper-muted); font-size:13px}
+.docid{text-align:right; min-width:0}
+.docid .kind{font-family:var(--f-display); font-weight:700; font-size:clamp(24px, 4vw, 32px); letter-spacing:.02em; color:var(--stamp); margin:0; line-height:1.1; text-transform:uppercase}
+.docid .no{font-family:var(--f-mono); font-size:15px; margin:2px 0 10px}
+.dates{display:grid; grid-template-columns:auto auto; gap:4px 10px; justify-content:end; font-size:13px; align-items:center}
+.dates label{color:var(--paper-muted); text-align:right}
+.dates input{border:1px solid transparent; border-bottom-color:var(--paper-line); background:transparent; font-family:var(--f-mono); font-size:13px; padding:2px 0; color:var(--paper-ink)}
+.dates input:hover{border-bottom-color:var(--stamp)}
+
+.parties{display:flex; gap:24px; padding-block:20px; flex-wrap:wrap}
+.buyer{flex:1 1 300px; min-height:96px; border:2px dashed var(--paper-line); border-radius:8px; padding:12px 14px; transition:border-color .15s, background .15s}
+.buyer.filled{border-style:solid; border-color:transparent; background:#f6f7fb}
+.buyer.over{border-color:var(--stamp); border-style:dashed; background:var(--stamp-soft)}
+.lbl{display:block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--paper-muted); margin-bottom:4px; font-weight:600}
+.buyer .bn{font-weight:600; font-size:16px; margin:0}
+.buyer p{margin:0; font-size:13px; color:var(--paper-muted)}
+.buyer .ph{color:var(--paper-muted); margin:8px 0 0}
+.pdvnote{flex:0 1 220px; font-size:12.5px; color:var(--paper-muted); align-self:end}
+
+.tablebox{overflow-x:auto; margin-inline:-6px; padding-inline:6px}
+table.lines{width:100%; border-collapse:collapse; min-width:680px; font-size:13.5px}
+.lines th{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--paper-muted); text-align:left; font-weight:600; padding:8px 6px; border-bottom:1px solid var(--paper-ink)}
+.lines th.r, .lines td.r{text-align:right}
+.lines td{padding:4px 6px; border-bottom:1px solid var(--paper-line); vertical-align:middle}
+.lines tr.ins-before td{box-shadow:inset 0 3px 0 var(--stamp)}
+.lines tr.ins-after td{box-shadow:inset 0 -3px 0 var(--stamp)}
+.lines tr.flash td{animation:flash .9s}
+@keyframes flash{from{background:var(--stamp-soft)} to{background:transparent}}
+.lines tr.dragsrc td{opacity:.35}
+.h{cursor:grab; color:var(--paper-muted); font-family:var(--f-mono); font-size:12px; white-space:nowrap; width:44px; user-select:none}
+.h .dots{letter-spacing:-2px; margin-right:4px; color:var(--paper-line)}
+tr:hover .h .dots{color:var(--stamp)}
+.in{width:100%; border:1px solid transparent; background:transparent; padding:5px 4px; border-radius:5px; color:var(--paper-ink)}
+.in:hover{border-color:var(--paper-line)}
+.in:focus{border-color:var(--stamp); background:#fff; outline:none}
+.in.num{text-align:right; font-family:var(--f-mono); font-size:13px}
+td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums}
+.x{border:0; background:transparent; color:var(--paper-muted); font-size:18px; width:28px; height:28px; border-radius:6px}
+.x:hover{background:#fbe0e3; color:#b32234}
+.c-name{width:34%} .c-unit{width:58px} .c-qty{width:72px} .c-price{width:100px} .c-disc{width:66px} .c-vat{width:66px} .c-amt{width:110px} .c-x{width:34px}
+.emptylines{margin-top:10px; border:2px dashed var(--paper-line); border-radius:8px; padding:26px 12px; text-align:center; color:var(--paper-muted)}
+.emptylines b{display:block; color:var(--paper-ink); font-family:var(--f-display); font-size:17px; margin-bottom:2px}
+.paper.over .emptylines{border-color:var(--stamp); background:var(--stamp-soft)}
+
+.sum{display:flex; justify-content:flex-end; padding-top:16px}
+.totals{width:min(100%, 340px); display:grid; gap:4px; font-size:13.5px}
+.totals .row{display:flex; justify-content:space-between; gap:12px}
+.totals .row span{color:var(--paper-muted)}
+.totals .row b{font-family:var(--f-mono); font-weight:500; font-variant-numeric:tabular-nums}
+.totals .grand{margin-top:6px; padding-top:10px; border-top:2px solid var(--paper-ink); align-items:baseline}
+.totals .grand span{color:var(--paper-ink); font-weight:600}
+.totals .grand b{font-size:20px; font-weight:500; color:var(--stamp)}
+.words{text-align:right; font-size:12.5px; color:var(--paper-muted); margin:6px 0 0}
+.words i{color:var(--paper-ink); font-style:normal}
+.p-foot{display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:24px; margin-top:28px; padding-top:16px; border-top:1px solid var(--paper-line); font-size:13px}
+.p-foot p{margin:0}
+.p-foot textarea{width:100%; min-height:54px; resize:vertical; border:1px solid var(--paper-line); border-radius:6px; padding:6px 8px; background:transparent; color:var(--paper-ink); margin-top:8px; font-size:13px}
+.sign{text-align:center; align-self:end; color:var(--paper-muted)}
+.sign .ln{border-top:1px solid var(--paper-ink); margin:36px 12px 4px}
+.mp{display:inline-block; border:1.5px solid var(--paper-line); border-radius:50%; width:56px; height:56px; line-height:53px; font-size:11px; margin-bottom:-24px; color:var(--paper-muted)}
+
+/* archive */
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px}
+.panel h2{font-family:var(--f-display); margin:0 0 4px; font-size:22px}
+.figs{display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:12px; margin:16px 0 20px}
+.fig{border:1px solid var(--line); border-radius:10px; padding:12px 14px}
+.fig span{display:block; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em}
+.fig b{font-family:var(--f-mono); font-weight:500; font-size:19px; font-variant-numeric:tabular-nums}
+.fig.late b{color:var(--bad)}
+.arch{width:100%; border-collapse:collapse; min-width:720px}
+.arch th{text-align:left; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); padding:8px; border-bottom:1px solid var(--line); font-weight:600}
+.arch td{padding:10px 8px; border-bottom:1px solid var(--line)}
+.arch .mono{font-family:var(--f-mono); font-variant-numeric:tabular-nums}
+.arch .r{text-align:right}
+.pill{border:0; border-radius:999px; padding:3px 10px; font-size:12px; font-weight:600}
+.pill.paid{background:var(--good-bg); color:var(--good)}
+.pill.open{background:var(--warn-bg); color:var(--warn)}
+.pill.late{background:var(--bad-bg); color:var(--bad)}
+.acts{display:flex; gap:6px; justify-content:flex-end}
+.btn.danger{color:var(--bad); border-color:var(--bad)}
+.empty{color:var(--muted); padding:24px 0; text-align:center}
+
+/* company */
+.cform{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; max-width:720px; margin-top:16px}
+.cform label{display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted)}
+.cform .wide{grid-column:span 2}
+.cform .field{color:var(--fg)}
+.chk{flex-direction:row!important; align-items:center; gap:8px!important; color:var(--fg)!important}
+
+.toast{position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); transform:translate(-50%, 20px); background:var(--fg); color:var(--bg); padding:10px 16px; border-radius:9px; font-weight:500; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; max-width:calc(100% - 32px)}
+.toast.show{opacity:1; transform:translate(-50%, 0)}
+
+@media (max-width: 880px){
+  .editor{grid-template-columns:minmax(0,1fr)}
+  .palette{position:static; max-height:none}
+  .cards{flex-direction:row; overflow-x:auto; padding-bottom:4px}
+  .card{flex:0 0 220px}
+  .p-foot{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width: 560px){
+  .docid{text-align:left}
+  .dates{justify-content:start}
+  .dates label{text-align:left}
+  .cform{grid-template-columns:minmax(0,1fr)}
+  .cform .wide{grid-column:span 1}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important; animation:none!important} }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap topin">
+    <div class="brand"><span class="mark">K</span>Kvit <small>fakture bez pretplate</small></div>
+    <nav class="tabs" aria-label="Glavni meni">
+      <button data-tab="editor" class="on">Nova faktura</button>
+      <button data-tab="archive">Arhiva <span class="count" id="archCount"></span></button>
+      <button data-tab="company">Moja firma</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="tab-editor" class="editor">
+    <aside class="palette" id="palette">
+      <div class="removehint">Pustite ovdje da uklonite stavku</div>
+      <div class="example" id="exampleNote" hidden>Ovo su primjer podaci. Unesite svoju firmu u kartici „Moja firma“.</div>
+      <h3>Proizvodi i usluge</h3>
+      <p class="sub">Prevucite na fakturu ili kliknite +</p>
+      <div class="cards" id="prodList"></div>
+      <details>
+        <summary>Dodaj proizvod ili uslugu</summary>
+        <form class="mini" id="prodForm">
+          <input id="pName" placeholder="Naziv" required>
+          <input id="pPrice" class="half" placeholder="Cijena KM" inputmode="decimal" required>
+          <input id="pUnit" class="half" placeholder="Jed. mjere" value="kom">
+          <select id="pVat"><option value="17">PDV 17%</option><option value="0">PDV 0%</option></select>
+          <button class="btn small">Dodaj</button>
+        </form>
+      </details>
+
+      <h3>Klijenti</h3>
+      <p class="sub">Prevucite na polje „Kupac“</p>
+      <div class="cards" id="clientList"></div>
+      <details>
+        <summary>Dodaj klijenta</summary>
+        <form class="mini" id="clientForm">
+          <input id="cName" placeholder="Naziv firme ili ime" required>
+          <input id="cAddr" placeholder="Adresa i grad">
+          <input id="cJib" placeholder="JIB / ID broj" inputmode="numeric">
+          <button class="btn small">Dodaj</button>
+        </form>
+      </details>
+
+      <div class="csvtip">Stavke iz Excela: sačuvajte kao CSV s kolonama <code>naziv;količina;cijena;PDV</code> i prevucite fajl na fakturu.</div>
+    </aside>
+
+    <div class="desk">
+      <div class="toolbar">
+        <div class="lft">
+          <label for="docType">Dokument</label>
+          <select id="docType">
+            <option>Faktura</option><option>Predračun</option><option>Ponuda</option>
+          </select>
+          <span class="count" id="editing"></span>
+        </div>
+        <div class="lft">
+          <button class="btn" id="newBtn">Nova</button>
+          <button class="btn primary" id="saveBtn">Sačuvaj u arhivu</button>
+        </div>
+      </div>
+
+      <article class="paper" id="paper">
+        <header class="p-head">
+          <div class="seller" id="seller"></div>
+          <div class="docid">
+            <p class="kind" id="kind">Faktura</p>
+            <p class="no">br. <span id="docNo"></span></p>
+            <div class="dates">
+              <label for="dDate">Datum izdavanja</label><input type="date" id="dDate">
+              <label for="dDue">Rok plaćanja</label><input type="date" id="dDue">
+            </div>
+          </div>
+        </header>
+
+        <div class="parties">
+          <div class="buyer" id="buyer"></div>
+          <div class="pdvnote" id="pdvNote"></div>
+        </div>
+
+        <div class="tablebox">
+          <table class="lines">
+            <thead><tr>
+              <th>#</th><th class="c-name">Naziv</th><th class="c-unit">Jed.</th><th class="c-qty r">Kol.</th>
+              <th class="c-price r">Cijena</th><th class="c-disc r">Rabat %</th><th class="c-vat r vatcol">PDV %</th>
+              <th class="c-amt r">Iznos</th><th class="c-x"><span hidden>Ukloni</span></th>
+            </tr></thead>
+            <tbody id="lineBody"></tbody>
+          </table>
+        </div>
+        <div class="emptylines" id="emptyLines"><b>Prevucite proizvod ovdje</b>ili ispustite CSV fajl sa stavkama</div>
+
+        <div class="sum"><div class="totals" id="totals"></div></div>
+        <p class="words" id="words"></p>
+
+        <footer class="p-foot">
+          <div>
+            <p id="bankLine"></p>
+            <textarea id="note" aria-label="Napomena na fakturi"></textarea>
+          </div>
+          <div class="sign"><span class="mp">M.P.</span><div class="ln"></div>Ovlašteno lice</div>
+        </footer>
+      </article>
+    </div>
+  </section>
+
+  <section id="tab-archive" hidden>
+    <div class="panel">
+      <h2>Arhiva dokumenata</h2>
+      <p class="sub">Kliknite status da označite fakturu kao plaćenu.</p>
+      <div class="figs" id="figs"></div>
+      <div style="overflow-x:auto"><table class="arch">
+        <thead><tr><th>Broj</th><th>Vrsta</th><th>Kupac</th><th>Datum</th><th>Rok</th><th class="r">Iznos KM</th><th>Status</th><th><span hidden>Akcije</span></th></tr></thead>
+        <tbody id="archBody"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section id="tab-company" hidden>
+    <div class="panel">
+      <h2>Moja firma</h2>
+      <p class="sub">Ovi podaci se pojavljuju na svakoj fakturi. Sve ostaje samo u vašem pregledniku.</p>
+      <form class="cform" id="coForm">
+        <label class="wide">Naziv firme ili obrta<input class="field" id="coName"></label>
+        <label class="wide">Adresa<input class="field" id="coAddr"></label>
+        <label>JIB / ID broj<input class="field" id="coJib" inputmode="numeric"></label>
+        <label>PDV broj<input class="field" id="coPdv" inputmode="numeric"></label>
+        <label>Žiro račun i banka<input class="field" id="coBank"></label>
+        <label>E-mail<input class="field" id="coEmail"></label>
+        <label class="wide chk"><input type="checkbox" id="coInPdv"> Firma je u sistemu PDV-a</label>
+      </form>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2, 9);
+const iso = d => d.toISOString().slice(0, 10);
+const today = () => iso(new Date());
+const addDays = (s, n) => { const d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + n); return iso(d); };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const parseNum = v => { let s = String(v ?? '').trim().replace(/\s/g, ''); if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.'); const n = parseFloat(s); return isNaN(n) ? NaN : n; };
+const r2 = n => Math.round(n * 100) / 100;
+function fmt(n){ const s = r2(n).toFixed(2); let [i, d] = s.split('.'); const neg = i[0] === '-'; if (neg) i = i.slice(1); i = i.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); return (neg ? '-' : '') + i + ',' + d; }
+const numStr = n => String(r2(n)).replace('.', ',');
+const bsDate = s => s ? s.split('-').reverse().join('.') + '.' : '';
+
+// amount in words (bosanski)
+const ONES = ['','jedan','dva','tri','četiri','pet','šest','sedam','osam','devet','deset','jedanaest','dvanaest','trinaest','četrnaest','petnaest','šesnaest','sedamnaest','osamnaest','devetnaest'];
+const TENS = ['','','dvadeset','trideset','četrdeset','pedeset','šezdeset','sedamdeset','osamdeset','devedeset'];
+const HUND = ['','sto','dvjesto','tristo','četiristo','petsto','šeststo','sedamsto','osamsto','devetsto'];
+const unit = (u, fem) => fem && u === 1 ? 'jedna' : fem && u === 2 ? 'dvije' : ONES[u];
+function tri(n, fem){ const out = []; const h = Math.floor(n / 100), r = n % 100; if (h) out.push(HUND[h]); if (r < 20){ if (r) out.push(unit(r, fem)); } else { out.push(TENS[Math.floor(r / 10)]); if (r % 10) out.push(unit(r % 10, fem)); } return out.join(' '); }
+function form(n, one, few, many){ const a = n % 100, b = n % 10; if (a >= 11 && a <= 14) return many; if (b === 1) return one; if (b >= 2 && b <= 4) return few; return many; }
+function words(n){
+  n = Math.floor(n); if (n === 0) return 'nula';
+  const m = Math.floor(n / 1e6), t = Math.floor(n / 1000) % 1000, r = n % 1000, p = [];
+  if (m) p.push(m === 1 ? 'milion' : tri(m, false) + ' ' + form(m, 'milion', 'miliona', 'miliona'));
+  if (t) p.push(t === 1 ? 'hiljadu' : tri(t, true) + ' ' + form(t, 'hiljada', 'hiljade', 'hiljada'));
+  if (r) p.push(tri(r, false));
+  return p.join(' ');
+}
+
+// state
+const KEY = 'kvit-v1';
+function seed(){
+  const clients = [
+    {id: uid(), name: 'Tehno servis d.o.o.', addr: 'Titova 12, 71000 Sarajevo', jib: '4201111111111'},
+    {id: uid(), name: 'Kafe bar Most', addr: 'Mostarska 3, 88000 Mostar', jib: '4202222222222'},
+    {id: uid(), name: 'Agencija Plavi val', addr: 'Kralja Petra I 5, 78000 Banja Luka', jib: '4403333333333'}
+  ];
+  const products = [
+    {id: uid(), name: 'Izrada web stranice', unit: 'kom', price: 1200, vat: 17},
+    {id: uid(), name: 'Održavanje stranice', unit: 'mj', price: 150, vat: 17},
+    {id: uid(), name: 'Konsultacije', unit: 'h', price: 60, vat: 17},
+    {id: uid(), name: 'Hosting i domena', unit: 'god', price: 96, vat: 17},
+    {id: uid(), name: 'Prevod teksta', unit: 'str', price: 25, vat: 17}
+  ];
+  const s = {
+    company: {name: 'Primjer d.o.o.', addr: 'Zmaja od Bosne 7, 71000 Sarajevo', jib: '4200000000000', pdv: '200000000000', bank: '1610000000000000, Raiffeisen Bank', email: 'info@primjer.ba', inPdv: true},
+    clients, products, invoices: [], seq: 1, draft: null
+  };
+  s.draft = blankDraft(s);
+  s.draft.client = {...clients[0]};
+  s.draft.lines = [lineFrom(products[0]), {...lineFrom(products[1]), qty: 3}];
+  return s;
+}
+function blankDraft(s){ const d = today(); return {id: null, type: 'Faktura', number: s.seq + '/' + d.slice(0, 4), date: d, due: addDays(d, 15), client: null, lines: [], note: 'Hvala na saradnji.'}; }
+function lineFrom(p){ return {pid: p.id, name: p.name, unit: p.unit, qty: 1, price: p.price, disc: 0, vat: p.vat}; }
+
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)); } catch(e) { S = null; }
+if (!S || !S.draft) S = seed();
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+
+const toastEl = $('#toast'); let tt;
+function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => toastEl.classList.remove('show'), 2200); }
+
+// calculations
+const lineNet = l => r2((l.qty || 0) * (l.price || 0) * (1 - (l.disc || 0) / 100));
+function calc(lines, inPdv){
+  const groups = {}; let base = 0;
+  lines.forEach(l => { const n = lineNet(l); base += n; const v = inPdv ? (l.vat || 0) : 0; groups[v] = (groups[v] || 0) + n; });
+  let vat = 0; const rows = Object.keys(groups).map(Number).sort((a, b) => b - a).map(rate => { const t = r2(groups[rate] * rate / 100); vat += t; return {rate, base: groups[rate], tax: t}; });
+  return {base: r2(base), vat: r2(vat), total: r2(base + vat), rows};
+}
+
+// palette
+function renderPalette(){
+  $('#prodList').innerHTML = S.products.map(p => `
+    <div class="card" draggable="true" data-drag="product" data-id="${p.id}">
+      <span class="grip" aria-hidden="true">⋮⋮</span>
+      <span class="meta"><span class="nm">${esc(p.name)}</span><span class="dt">${fmt(p.price)} KM / ${esc(p.unit)}</span></span>
+      <button class="del" data-delprod="${p.id}" aria-label="Obriši ${esc(p.name)}" title="Obriši">×</button>
+      <button class="act" data-add="${p.id}" aria-label="Dodaj ${esc(p.name)} na fakturu" title="Dodaj na fakturu">+</button>
+    </div>`).join('') || '<p class="sub">Još nema proizvoda.</p>';
+  $('#clientList').innerHTML = S.clients.map(c => `
+    <div class="card client" draggable="true" data-drag="client" data-id="${c.id}">
+      <span class="grip" aria-hidden="true">⋮⋮</span>
+      <span class="meta"><span class="nm">${esc(c.name)}</span><span class="dt">${esc(c.jib || '')}</span></span>
+      <button class="del" data-delclient="${c.id}" aria-label="Obriši ${esc(c.name)}" title="Obriši">×</button>
+      <button class="act" data-pick="${c.id}">Odaberi</button>
+    </div>`).join('') || '<p class="sub">Još nema klijenata.</p>';
+  $('#exampleNote').hidden = S.company.name !== 'Primjer d.o.o.';
+}
+
+// invoice paper
+function renderHeader(){
+  const c = S.company, d = S.draft;
+  $('#seller').innerHTML = `<p class="co">${esc(c.name || 'Naziv vaše firme')}</p>
+    <p>${esc(c.addr)}</p><p>JIB: ${esc(c.jib)}${c.inPdv && c.pdv ? ' · PDV br.: ' + esc(c.pdv) : ''}</p>${c.email ? `<p>${esc(c.email)}</p>` : ''}`;
+  $('#kind').textContent = d.type;
+  $('#docType').value = d.type;
+  $('#docNo').textContent = d.number;
+  $('#dDate').value = d.date; $('#dDue').value = d.due;
+  $('#dDue').previousElementSibling.textContent = d.type === 'Ponuda' ? 'Ponuda važi do' : 'Rok plaćanja';
+  $('#note').value = d.note || '';
+  $('#bankLine').innerHTML = c.bank ? `Uplatu izvršiti na račun <b>${esc(c.bank)}</b>, s pozivom na broj ${esc(d.number)}.` : '';
+  $('#pdvNote').textContent = c.inPdv ? '' : 'Obveznik nije u sistemu PDV-a.';
+  document.querySelectorAll('.vatcol').forEach(el => el.hidden = !c.inPdv);
+  $('#editing').textContent = d.id ? 'Uređujete sačuvani dokument' : '';
+}
+function renderBuyer(){
+  const b = $('#buyer'), c = S.draft.client;
+  b.classList.toggle('filled', !!c);
+  b.innerHTML = c
+    ? `<span class="lbl">Kupac</span><p class="bn">${esc(c.name)}</p><p>${esc(c.addr)}</p><p>JIB: ${esc(c.jib)}</p>`
+    : `<span class="lbl">Kupac</span><p class="ph">Prevucite klijenta ovdje</p>`;
+}
+function renderLines(){
+  const inPdv = S.company.inPdv;
+  $('#lineBody').innerHTML = S.draft.lines.map((l, i) => `
+    <tr data-i="${i}">
+      <td class="h" draggable="true" data-drag="line" data-id="${i}" title="Prevucite za promjenu redoslijeda"><span class="dots">⋮⋮</span>${i + 1}</td>
+      <td><input class="in" data-f="name" value="${esc(l.name)}" aria-label="Naziv stavke ${i + 1}"></td>
+      <td><input class="in" data-f="unit" value="${esc(l.unit)}" aria-label="Jedinica mjere"></td>
+      <td><input class="in num" data-f="qty" inputmode="decimal" value="${numStr(l.qty)}" aria-label="Količina"></td>
+      <td><input class="in num" data-f="price" inputmode="decimal" value="${fmt(l.price)}" aria-label="Cijena"></td>
+      <td><input class="in num" data-f="disc" inputmode="decimal" value="${numStr(l.disc)}" aria-label="Rabat u procentima"></td>
+      <td class="vatcol"${inPdv ? '' : ' hidden'}><input class="in num" data-f="vat" inputmode="decimal" value="${numStr(l.vat)}" aria-label="PDV stopa"></td>
+      <td class="amt">${fmt(lineNet(l))}</td>
+      <td><button class="x" data-del="${i}" aria-label="Ukloni stavku ${i + 1}">×</button></td>
+    </tr>`).join('');
+  $('#emptyLines').hidden = S.draft.lines.length > 0;
+  renderTotals();
+}
+function renderTotals(){
+  const inPdv = S.company.inPdv, t = calc(S.draft.lines, inPdv);
+  let h = `<div class="row"><span>${inPdv ? 'Osnovica' : 'Ukupno'}</span><b>${fmt(t.base)}</b></div>`;
+  if (inPdv) t.rows.forEach(r => { h += `<div class="row"><span>PDV ${r.rate}% na ${fmt(r.base)}</span><b>${fmt(r.tax)}</b></div>`; });
+  h += `<div class="row grand"><span>Za uplatu</span><b>${fmt(t.total)} KM</b></div>`;
+  $('#totals').innerHTML = h;
+  const km = Math.floor(t.total), fen = Math.round((t.total - km) * 100);
+  $('#words').innerHTML = t.total > 0 ? `Slovima: <i>${words(km)} KM i ${String(fen).padStart(2, '0')}/100</i>` : '';
+}
+function renderEditor(){ renderHeader(); renderBuyer(); renderLines(); }
+
+// archive
+function status(inv){ if (inv.paid) return 'paid'; if (inv.type === 'Faktura' && inv.due < today()) return 'late'; return 'open'; }
+const STATUS = {paid: 'Plaćena', open: 'Otvorena', late: 'Kasni'};
+let confirmDel = null;
+function renderArchive(){
+  const list = [...S.invoices].sort((a, b) => b.date.localeCompare(a.date));
+  $('#archCount').textContent = S.invoices.length || '';
+  const inv = S.invoices.filter(i => i.type === 'Faktura');
+  const sum = f => fmt(inv.filter(f).reduce((a, i) => a + i.total, 0));
+  $('#figs').innerHTML = `
+    <div class="fig"><span>Fakturisano</span><b>${sum(() => true)}</b></div>
+    <div class="fig"><span>Naplaćeno</span><b>${sum(i => i.paid)}</b></div>
+    <div class="fig"><span>Otvoreno</span><b>${sum(i => !i.paid)}</b></div>
+    <div class="fig late"><span>Kasni</span><b>${sum(i => status(i) === 'late')}</b></div>`;
+  $('#archBody').innerHTML = list.length ? list.map(i => {
+    const st = status(i);
+    return `<tr>
+      <td class="mono">${esc(i.number)}</td><td>${esc(i.type)}</td><td>${esc(i.client.name)}</td>
+      <td class="mono">${bsDate(i.date)}</td><td class="mono">${bsDate(i.due)}</td><td class="mono r">${fmt(i.total)}</td>
+      <td>${i.type === 'Faktura' ? `<button class="pill ${st}" data-toggle="${i.id}">${STATUS[st]}</button>` : '<span class="sub">—</span>'}</td>
+      <td><div class="acts"><button class="btn small" data-open="${i.id}">Otvori</button>
+      <button class="btn small${confirmDel === i.id ? ' danger' : ''}" data-delinv="${i.id}">${confirmDel === i.id ? 'Potvrdi brisanje' : 'Obriši'}</button></div></td>
+    </tr>`; }).join('') : `<tr><td colspan="8" class="empty">Arhiva je prazna. Sačuvajte prvu fakturu iz kartice „Nova faktura“.</td></tr>`;
+}
+
+// company
+function renderCompany(){
+  const c = S.company;
+  $('#coName').value = c.name; $('#coAddr').value = c.addr; $('#coJib').value = c.jib; $('#coPdv').value = c.pdv;
+  $('#coBank').value = c.bank; $('#coEmail').value = c.email; $('#coInPdv').checked = c.inPdv;
+}
+$('#coForm').addEventListener('input', () => {
+  Object.assign(S.company, {name: $('#coName').value, addr: $('#coAddr').value, jib: $('#coJib').value, pdv: $('#coPdv').value, bank: $('#coBank').value, email: $('#coEmail').value, inPdv: $('#coInPdv').checked});
+  save(); renderPalette(); renderEditor();
+});
+
+// tabs
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  ['editor', 'archive', 'company'].forEach(t => $('#tab-' + t).hidden = t !== b.dataset.tab);
+  if (b.dataset.tab === 'archive') { confirmDel = null; renderArchive(); }
+}));
+
+// adding lines / clients
+function addProduct(pid, at){
+  const p = S.products.find(x => x.id === pid); if (!p) return;
+  const lines = S.draft.lines, ex = lines.findIndex(l => l.pid === pid);
+  let idx;
+  if (ex >= 0) { lines[ex].qty = r2(lines[ex].qty + 1); idx = ex; toast(`${p.name}: količina povećana na ${numStr(lines[ex].qty)}`); }
+  else { idx = at == null ? lines.length : at; lines.splice(idx, 0, lineFrom(p)); }
+  save(); renderLines(); flash(idx);
+}
+function pickClient(cid){
+  const c = S.clients.find(x => x.id === cid); if (!c) return;
+  S.draft.client = {...c}; save(); renderBuyer();
+}
+function flash(i){ const tr = $('#lineBody').rows[i]; if (tr) { tr.classList.remove('flash'); void tr.offsetWidth; tr.classList.add('flash'); } }
+
+// palette clicks
+$('#palette').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.add) addProduct(t.dataset.add);
+  if (t.dataset.pick) { pickClient(t.dataset.pick); toast('Kupac odabran'); }
+  if (t.dataset.delprod) { S.products = S.products.filter(p => p.id !== t.dataset.delprod); save(); renderPalette(); }
+  if (t.dataset.delclient) { S.clients = S.clients.filter(c => c.id !== t.dataset.delclient); save(); renderPalette(); }
+});
+$('#prodForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const price = parseNum($('#pPrice').value);
+  if (isNaN(price)) { toast('Unesite cijenu kao broj, npr. 49,90'); return; }
+  S.products.push({id: uid(), name: $('#pName').value.trim(), unit: $('#pUnit').value.trim() || 'kom', price, vat: +$('#pVat').value});
+  e.target.reset(); $('#pUnit').value = 'kom'; save(); renderPalette(); toast('Proizvod dodan');
+});
+$('#clientForm').addEventListener('submit', e => {
+  e.preventDefault();
+  S.clients.push({id: uid(), name: $('#cName').value.trim(), addr: $('#cAddr').value.trim(), jib: $('#cJib').value.trim()});
+  e.target.reset(); save(); renderPalette(); toast('Klijent dodan');
+});
+
+// inline line editing
+$('#lineBody').addEventListener('input', e => {
+  const inp = e.target.closest('input'); if (!inp) return;
+  const tr = inp.closest('tr'), l = S.draft.lines[+tr.dataset.i], f = inp.dataset.f;
+  if (f === 'name' || f === 'unit') l[f] = inp.value;
+  else { const n = parseNum(inp.value); l[f] = isNaN(n) ? 0 : n; }
+  tr.querySelector('.amt').textContent = fmt(lineNet(l));
+  save(); renderTotals();
+});
+$('#lineBody').addEventListener('change', e => { const inp = e.target.closest('input'); if (inp && inp.dataset.f === 'price') inp.value = fmt(S.draft.lines[+inp.closest('tr').dataset.i].price); });
+$('#lineBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-del]'); if (!b) return;
+  S.draft.lines.splice(+b.dataset.del, 1); save(); renderLines();
+});
+
+// header fields
+$('#docType').addEventListener('change', e => { S.draft.type = e.target.value; save(); renderHeader(); });
+$('#dDate').addEventListener('change', e => { S.draft.date = e.target.value; save(); });
+$('#dDue').addEventListener('change', e => { S.draft.due = e.target.value; save(); });
+$('#note').addEventListener('input', e => { S.draft.note = e.target.value; save(); });
+
+// save / new
+$('#saveBtn').addEventListener('click', () => {
+  const d = S.draft;
+  if (!d.client) { toast('Dodajte kupca: prevucite klijenta na fakturu'); return; }
+  if (!d.lines.length) { toast('Dodajte bar jednu stavku'); return; }
+  const t = calc(d.lines, S.company.inPdv);
+  const rec = JSON.parse(JSON.stringify({...d, total: t.total, paid: false}));
+  if (d.id) { const i = S.invoices.findIndex(x => x.id === d.id); rec.paid = S.invoices[i]?.paid || false; if (i >= 0) S.invoices[i] = rec; else S.invoices.push(rec); }
+  else { rec.id = uid(); S.invoices.push(rec); S.seq++; }
+  toast(`${d.type} ${d.number} je sačuvana`);
+  S.draft = blankDraft(S); save(); renderEditor(); renderArchive();
+});
+$('#newBtn').addEventListener('click', () => { S.draft = blankDraft(S); save(); renderEditor(); toast('Prazna faktura spremna'); });
+
+// archive actions
+$('#archBody').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.toggle) { const i = S.invoices.find(x => x.id === b.dataset.toggle); i.paid = !i.paid; save(); renderArchive(); }
+  if (b.dataset.open) {
+    const i = S.invoices.find(x => x.id === b.dataset.open);
+    S.draft = JSON.parse(JSON.stringify(i)); delete S.draft.total; delete S.draft.paid;
+    save(); renderEditor(); document.querySelector('[data-tab="editor"]').click();
+  }
+  if (b.dataset.delinv) {
+    if (confirmDel === b.dataset.delinv) { S.invoices = S.invoices.filter(x => x.id !== confirmDel); confirmDel = null; save(); toast('Dokument obrisan'); }
+    else confirmDel = b.dataset.delinv;
+    renderArchive();
+  }
+});
+
+// ---------- drag & drop ----------
+const MIME = k => 'text/x-kvit-' + k;
+const has = (e, k) => [...e.dataTransfer.types].includes(k === 'Files' ? 'Files' : MIME(k));
+const paper = $('#paper'), buyer = $('#buyer'), body = $('#lineBody'), palette = $('#palette');
+let dragLine = null;
+
+document.addEventListener('dragstart', e => {
+  const el = e.target.closest && e.target.closest('[data-drag]'); if (!el) return;
+  const k = el.dataset.drag;
+  e.dataTransfer.setData(MIME(k), el.dataset.id);
+  e.dataTransfer.setData('text/plain', el.textContent.trim());
+  e.dataTransfer.effectAllowed = k === 'line' ? 'move' : 'copy';
+  document.body.classList.add('drag-' + k);
+  if (k === 'line') { dragLine = +el.dataset.id; const tr = el.closest('tr'); try { e.dataTransfer.setDragImage(tr, 20, 20); } catch(_){} requestAnimationFrame(() => tr.classList.add('dragsrc')); }
+});
+document.addEventListener('dragend', () => {
+  document.body.classList.remove('drag-product', 'drag-client', 'drag-line');
+  clearMarks(); dragLine = null;
+});
+function clearMarks(){
+  paper.classList.remove('over', 'over-files'); buyer.classList.remove('over'); palette.classList.remove('over-remove');
+  [...body.rows].forEach(r => r.classList.remove('ins-before', 'ins-after', 'dragsrc'));
+}
+function insertIndex(y){
+  const rows = [...body.rows];
+  for (let i = 0; i < rows.length; i++) { const r = rows[i].getBoundingClientRect(); if (y < r.top + r.height / 2) return i; }
+  return rows.length;
+}
+function markIndex(i){
+  const rows = [...body.rows]; rows.forEach(r => r.classList.remove('ins-before', 'ins-after'));
+  if (!rows.length) return;
+  if (i < rows.length) rows[i].classList.add('ins-before'); else rows[rows.length - 1].classList.add('ins-after');
+}
+
+paper.addEventListener('dragover', e => {
+  if (has(e, 'product') || has(e, 'line')) {
+    e.preventDefault(); e.dataTransfer.dropEffect = has(e, 'line') ? 'move' : 'copy';
+    paper.classList.add('over'); markIndex(insertIndex(e.clientY));
+  } else if (has(e, 'client')) {
+    e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; paper.classList.add('over'); buyer.classList.add('over');
+  } else if (has(e, 'Files')) {
+    e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; paper.classList.add('over-files');
+  }
+});
+paper.addEventListener('dragleave', e => { if (!paper.contains(e.relatedTarget)) { paper.classList.remove('over', 'over-files'); buyer.classList.remove('over'); [...body.rows].forEach(r => r.classList.remove('ins-before', 'ins-after')); } });
+paper.addEventListener('drop', e => {
+  e.preventDefault();
+  const at = insertIndex(e.clientY);
+  if (has(e, 'product')) addProduct(e.dataTransfer.getData(MIME('product')), at);
+  else if (has(e, 'client')) { pickClient(e.dataTransfer.getData(MIME('client'))); toast('Kupac postavljen'); }
+  else if (has(e, 'line')) {
+    const from = +e.dataTransfer.getData(MIME('line')); let to = at;
+    if (from < to) to--;
+    if (from !== to) { const [l] = S.draft.lines.splice(from, 1); S.draft.lines.splice(to, 0, l); save(); renderLines(); flash(to); }
+  } else if (e.dataTransfer.files.length) importFiles(e.dataTransfer.files);
+  clearMarks();
+});
+
+// drop a line back on the shelf to remove it
+palette.addEventListener('dragover', e => { if (has(e, 'line')) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; palette.classList.add('over-remove'); } });
+palette.addEventListener('dragleave', e => { if (!palette.contains(e.relatedTarget)) palette.classList.remove('over-remove'); });
+palette.addEventListener('drop', e => {
+  if (!has(e, 'line')) return; e.preventDefault();
+  const i = +e.dataTransfer.getData(MIME('line')); const [l] = S.draft.lines.splice(i, 1);
+  save(); renderLines(); clearMarks(); toast(`Uklonjeno: ${l.name}`);
+});
+
+// stop the browser from opening files dropped beside the paper
+window.addEventListener('dragover', e => { if (has(e, 'Files') && !paper.contains(e.target)) e.preventDefault(); });
+window.addEventListener('drop', e => { if (has(e, 'Files') && !paper.contains(e.target)) { e.preventDefault(); toast('Ispustite fajl na fakturu'); } });
+
+function importFiles(files){
+  [...files].forEach(f => {
+    if (!/\.(csv|txt|tsv)$/i.test(f.name) && !/^text\//.test(f.type)) { toast(`${f.name}: podržani su CSV fajlovi`); return; }
+    const rd = new FileReader();
+    rd.onload = () => {
+      const rows = parseCSV(String(rd.result));
+      if (!rows.length) { toast('U fajlu nisu pronađene stavke. Format: naziv;količina;cijena;PDV'); return; }
+      const start = S.draft.lines.length;
+      S.draft.lines.push(...rows); save(); renderLines();
+      for (let i = start; i < S.draft.lines.length; i++) flash(i);
+      toast(`Dodano ${rows.length} ${form(rows.length, 'stavka', 'stavke', 'stavki')} iz ${f.name}`);
+    };
+    rd.readAsText(f);
+  });
+}
+function parseCSV(text){
+  const out = [];
+  text.split(/\r?\n/).forEach(line => {
+    if (!line.trim()) return;
+    const sep = line.includes(';') ? ';' : line.includes('\t') ? '\t' : ',';
+    const c = line.split(sep).map(x => x.trim().replace(/^"|"$/g, ''));
+    const qty = parseNum(c[1]), price = parseNum(c[2]), vat = c[3] ? parseNum(c[3]) : 17;
+    if (!c[0] || isNaN(qty) || isNaN(price)) return;
+    out.push({pid: null, name: c[0], unit: 'kom', qty, price, disc: 0, vat: isNaN(vat) ? 17 : vat});
+  });
+  return out;
+}
+
+renderPalette(); renderCompany(); renderEditor(); renderArchive();
+})();
+</script>
+</body>
+</html>
