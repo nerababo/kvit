@@ -210,6 +210,15 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
 
 /* backup panel */
 .pdate{display:none; font-family:var(--f-mono); font-size:13px}
+.ref{font-size:12.5px; color:var(--paper-muted); margin:-6px 0 10px}
+.ref:empty{display:none}
+.totals .adv span{color:var(--paper-ink)}
+.unadv{border:0; background:transparent; color:var(--paper-muted); font-size:15px; padding:0 4px; border-radius:4px}
+.unadv:hover{background:#fbe0e3; color:#b32234}
+#advPick{border-color:var(--accent); color:var(--accent); font-weight:500}
+.pill.storno{background:var(--surface-2); color:var(--muted)}
+.arch .reftxt{display:block; font-size:12px; color:var(--muted)}
+.btn.link{border-color:transparent; color:var(--accent); padding-inline:6px}
 .backup{margin-top:20px}
 .backup .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px}
 .backup .last{font-size:13px; color:var(--muted)}
@@ -232,7 +241,7 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
   table.lines{min-width:0}
   .lines tr{break-inside:avoid}
   .h{width:28px}
-  .h .dots, .c-x, .lines td:last-child{display:none}
+  .h .dots, .c-x, .lines td:last-child, .unadv{display:none}
   .in{border-color:transparent!important; padding:3px 0}
   .dates input{display:none!important}
   .pdate{display:inline}
@@ -296,8 +305,9 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
         <div class="lft">
           <label for="docType">Dokument</label>
           <select id="docType">
-            <option>Faktura</option><option>Predračun</option><option>Ponuda</option>
+            <option>Faktura</option><option>Predračun</option><option>Ponuda</option><option>Avansna faktura</option><option disabled>Storno faktura</option>
           </select>
+          <select id="advPick" hidden aria-label="Odbij avans"></select>
           <span class="count" id="editing"></span>
         </div>
         <div class="lft">
@@ -313,6 +323,7 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
           <div class="docid">
             <p class="kind" id="kind">Faktura</p>
             <p class="no">br. <span id="docNo"></span></p>
+            <p class="ref" id="docRef"></p>
             <div class="dates">
               <label for="dDate">Datum izdavanja</label><span><input type="date" id="dDate"><span class="pdate" id="dDateP"></span></span>
               <label for="dDue">Rok plaćanja</label><span><input type="date" id="dDue"><span class="pdate" id="dDueP"></span></span>
@@ -453,7 +464,8 @@ function seed(){
   s.draft.lines = [lineFrom(products[0]), {...lineFrom(products[1]), qty: 3}];
   return s;
 }
-function blankDraft(s){ const d = today(); return {id: null, type: 'Faktura', number: s.seq + '/' + d.slice(0, 4), date: d, due: addDays(d, 15), client: null, lines: [], note: 'Hvala na saradnji.'}; }
+function blankDraft(s){ const d = today(); return {id: null, type: 'Faktura', number: s.seq + '/' + d.slice(0, 4), date: d, due: addDays(d, 15), client: null, lines: [], advances: [], ref: '', note: 'Hvala na saradnji.'}; }
+const nextNo = () => S.seq + '/' + today().slice(0, 4);
 function lineFrom(p){ return {pid: p.id, name: p.name, unit: p.unit, qty: 1, price: p.price, disc: 0, vat: p.vat}; }
 
 let S;
@@ -466,12 +478,19 @@ function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); c
 
 // calculations
 const lineNet = l => r2((l.qty || 0) * (l.price || 0) * (1 - (l.disc || 0) / 100));
-function calc(lines, inPdv){
-  const groups = {}; let base = 0;
+// advances: [{rows:[{rate, base}]}] are deducted per VAT rate (konačna faktura)
+function calc(lines, inPdv, advances){
+  const groups = {}, adv = {}; let base = 0, advBase = 0;
   lines.forEach(l => { const n = lineNet(l); base += n; const v = inPdv ? (l.vat || 0) : 0; groups[v] = (groups[v] || 0) + n; });
-  let vat = 0; const rows = Object.keys(groups).map(Number).sort((a, b) => b - a).map(rate => { const t = r2(groups[rate] * rate / 100); vat += t; return {rate, base: groups[rate], tax: t}; });
-  return {base: r2(base), vat: r2(vat), total: r2(base + vat), rows};
+  (advances || []).forEach(a => a.rows.forEach(r => { const v = inPdv ? r.rate : 0; adv[v] = (adv[v] || 0) + r.base; advBase += r.base; if (!(v in groups)) groups[v] = 0; }));
+  let vat = 0;
+  const rows = Object.keys(groups).map(Number).sort((a, b) => b - a).map(rate => {
+    const net = r2(groups[rate] - (adv[rate] || 0)), t = r2(net * rate / 100); vat += t; return {rate, base: net, tax: t};
+  });
+  const net = r2(base - advBase);
+  return {lineBase: r2(base), advBase: r2(advBase), base: net, vat: r2(vat), total: r2(net + vat), rows};
 }
+const advEntry = inv => ({id: inv.id, number: inv.number, rows: (inv.vatRows || calc(inv.lines, S.company.inPdv).rows).map(r => ({rate: r.rate, base: r.base}))});
 
 // palette
 function renderPalette(){
@@ -502,8 +521,12 @@ function renderHeader(){
   $('#docNo').textContent = d.number;
   $('#dDate').value = d.date; $('#dDue').value = d.due; $('#dDateP').textContent = bsDate(d.date); $('#dDueP').textContent = bsDate(d.due);
   document.querySelector('label[for="dDue"]').textContent = d.type === 'Ponuda' ? 'Ponuda važi do' : 'Rok plaćanja';
+  const isStorno = d.type === 'Storno faktura';
+  document.querySelector('label[for="dDue"]').hidden = isStorno; $('#dDue').parentElement.hidden = isStorno;
+  $('#docRef').textContent = d.ref || '';
   $('#note').value = d.note || '';
-  $('#bankLine').innerHTML = c.bank ? `Uplatu izvršiti na račun <b>${esc(c.bank)}</b>, s pozivom na broj ${esc(d.number)}.` : '';
+  $('#bankLine').innerHTML = isStorno ? 'Ovim dokumentom poništava se navedena faktura. Uplata se ne vrši.'
+    : c.bank ? `Uplatu izvršiti na račun <b>${esc(c.bank)}</b>, s pozivom na broj ${esc(d.number)}.` : '';
   $('#pdvNote').textContent = c.inPdv ? '' : 'Obveznik nije u sistemu PDV-a.';
   document.querySelectorAll('.vatcol').forEach(el => el.hidden = !c.inPdv);
   $('#editing').textContent = d.id ? 'Uređujete sačuvani dokument' : '';
@@ -533,24 +556,54 @@ function renderLines(){
   renderTotals();
 }
 function renderTotals(){
-  const inPdv = S.company.inPdv, t = calc(S.draft.lines, inPdv);
-  let h = `<div class="row"><span>${inPdv ? 'Osnovica' : 'Ukupno'}</span><b>${fmt(t.base)}</b></div>`;
+  const inPdv = S.company.inPdv, d = S.draft, adv = d.advances || [], t = calc(d.lines, inPdv, adv);
+  let h = '';
+  if (adv.length) {
+    h += `<div class="row"><span>${inPdv ? 'Osnovica stavki' : 'Ukupno stavke'}</span><b>${fmt(t.lineBase)}</b></div>`;
+    adv.forEach(a => { const b = a.rows.reduce((x, r) => x + r.base, 0);
+      h += `<div class="row adv"><span>Umanjenje za avans br. ${esc(a.number)}${inPdv ? ' (osnovica)' : ''}${d.type === 'Storno faktura' ? '' : `<button class="unadv" data-unadv="${a.id}" aria-label="Ukloni avans ${esc(a.number)}">×</button>`}</span><b>${fmt(-b)}</b></div>`; });
+  }
+  h += `<div class="row"><span>${inPdv ? 'Osnovica' : 'Ukupno'}</span><b>${fmt(t.base)}</b></div>`;
   if (inPdv) t.rows.forEach(r => { h += `<div class="row"><span>PDV ${r.rate}% na ${fmt(r.base)}</span><b>${fmt(r.tax)}</b></div>`; });
-  h += `<div class="row grand"><span>Za uplatu</span><b>${fmt(t.total)} KM</b></div>`;
+  h += `<div class="row grand"><span>${d.type === 'Storno faktura' ? 'Iznos storna' : 'Za uplatu'}</span><b>${fmt(t.total)} KM</b></div>`;
   $('#totals').innerHTML = h;
-  const km = Math.floor(t.total), fen = Math.round((t.total - km) * 100);
-  $('#words').innerHTML = t.total > 0 ? `Slovima: <i>${words(km)} KM i ${String(fen).padStart(2, '0')}/100</i>` : '';
+  const abs = Math.abs(t.total), km = Math.floor(abs), fen = Math.round((abs - km) * 100);
+  $('#words').innerHTML = t.total !== 0 ? `Slovima: <i>${t.total < 0 ? 'minus ' : ''}${words(km)} KM i ${String(fen).padStart(2, '0')}/100</i>` : '';
 }
-function renderEditor(){ renderHeader(); renderBuyer(); renderLines(); }
+// advances that can still be deducted on this draft
+function openAdvances(){
+  const d = S.draft; if (d.type !== 'Faktura' || !d.client) return [];
+  const used = new Set();
+  S.invoices.forEach(i => { if (i.id !== d.id && !i.stornoBy) (i.advances || []).forEach(a => used.add(a.id)); });
+  (d.advances || []).forEach(a => used.add(a.id));
+  return S.invoices.filter(i => i.type === 'Avansna faktura' && !i.stornoBy && !used.has(i.id) && (i.client.id ? i.client.id === d.client.id : i.client.name === d.client.name));
+}
+function renderAdvPick(){
+  const el = $('#advPick'), list = openAdvances();
+  el.hidden = !list.length;
+  el.innerHTML = `<option value="">Odbij avans (${list.length})</option>` + list.map(i => `<option value="${i.id}">Avans ${esc(i.number)}: ${fmt(i.total)} KM</option>`).join('');
+}
+function renderEditor(){ renderHeader(); renderBuyer(); renderLines(); renderAdvPick(); }
 
 // archive
-function status(inv){ if (inv.paid) return 'paid'; if (inv.type === 'Faktura' && inv.due < today()) return 'late'; return 'open'; }
-const STATUS = {paid: 'Plaćena', open: 'Otvorena', late: 'Kasni'};
-let confirmDel = null;
+const BILLED = ['Faktura', 'Avansna faktura'];
+function status(inv){ if (inv.stornoBy) return 'storno'; if (inv.paid) return 'paid'; if (inv.type === 'Faktura' && inv.due < today()) return 'late'; return 'open'; }
+const STATUS = {paid: 'Plaćena', open: 'Otvorena', late: 'Kasni', storno: 'Stornirana'};
+let confirmDel = null, confirmStorno = null;
+function rowActions(i){
+  const b = [];
+  if (i.type === 'Ponuda') b.push(`<button class="btn small link" data-mkinv="${i.id}">U fakturu</button>`);
+  if (i.type === 'Predračun') b.push(`<button class="btn small link" data-mkadv="${i.id}">Avansna faktura</button>`, `<button class="btn small link" data-mkinv="${i.id}">U fakturu</button>`);
+  if (i.type === 'Avansna faktura' && !i.stornoBy) b.push(`<button class="btn small link" data-mkfinal="${i.id}">Konačna faktura</button>`);
+  b.push(`<button class="btn small" data-open="${i.id}">Otvori</button>`);
+  if (BILLED.includes(i.type) && !i.stornoBy) b.push(`<button class="btn small${confirmStorno === i.id ? ' danger' : ''}" data-storno="${i.id}">${confirmStorno === i.id ? 'Potvrdi storno' : 'Storniraj'}</button>`);
+  if (!i.stornoBy && !i.stornoOf) b.push(`<button class="btn small${confirmDel === i.id ? ' danger' : ''}" data-delinv="${i.id}">${confirmDel === i.id ? 'Potvrdi brisanje' : 'Obriši'}</button>`);
+  return b.join('');
+}
 function renderArchive(){
-  const list = [...S.invoices].sort((a, b) => b.date.localeCompare(a.date));
+  const list = [...S.invoices].sort((a, b) => b.date.localeCompare(a.date) || parseInt(b.number) - parseInt(a.number));
   $('#archCount').textContent = S.invoices.length || '';
-  const inv = S.invoices.filter(i => i.type === 'Faktura');
+  const inv = S.invoices.filter(i => BILLED.includes(i.type) && !i.stornoBy);
   const sum = f => fmt(inv.filter(f).reduce((a, i) => a + i.total, 0));
   $('#figs').innerHTML = `
     <div class="fig"><span>Fakturisano</span><b>${sum(() => true)}</b></div>
@@ -560,11 +613,10 @@ function renderArchive(){
   $('#archBody').innerHTML = list.length ? list.map(i => {
     const st = status(i);
     return `<tr>
-      <td class="mono">${esc(i.number)}</td><td>${esc(i.type)}</td><td>${esc(i.client.name)}</td>
+      <td class="mono">${esc(i.number)}</td><td>${esc(i.type)}${i.ref ? `<span class="reftxt">${esc(i.ref)}</span>` : ''}</td><td>${esc(i.client.name)}</td>
       <td class="mono">${bsDate(i.date)}</td><td class="mono">${bsDate(i.due)}</td><td class="mono r">${fmt(i.total)}</td>
-      <td>${i.type === 'Faktura' ? `<button class="pill ${st}" data-toggle="${i.id}">${STATUS[st]}</button>` : '<span class="sub">—</span>'}</td>
-      <td><div class="acts"><button class="btn small" data-open="${i.id}">Otvori</button>
-      <button class="btn small${confirmDel === i.id ? ' danger' : ''}" data-delinv="${i.id}">${confirmDel === i.id ? 'Potvrdi brisanje' : 'Obriši'}</button></div></td>
+      <td>${st === 'storno' ? `<span class="pill storno">${STATUS[st]}</span>` : BILLED.includes(i.type) ? `<button class="pill ${st}" data-toggle="${i.id}">${STATUS[st]}</button>` : '<span class="sub">—</span>'}</td>
+      <td><div class="acts">${rowActions(i)}</div></td>
     </tr>`; }).join('') : `<tr><td colspan="8" class="empty">Arhiva je prazna. Sačuvajte prvu fakturu iz kartice „Nova faktura“.</td></tr>`;
 }
 
@@ -583,7 +635,7 @@ $('#coForm').addEventListener('input', () => {
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
   ['editor', 'archive', 'company'].forEach(t => $('#tab-' + t).hidden = t !== b.dataset.tab);
-  if (b.dataset.tab === 'archive') { confirmDel = null; renderArchive(); }
+  if (b.dataset.tab === 'archive') { confirmDel = confirmStorno = null; renderArchive(); }
 }));
 
 // adding lines / clients
@@ -597,7 +649,8 @@ function addProduct(pid, at){
 }
 function pickClient(cid){
   const c = S.clients.find(x => x.id === cid); if (!c) return;
-  S.draft.client = {...c}; save(); renderBuyer();
+  if (S.draft.client && S.draft.client.id !== c.id && (S.draft.advances || []).length) { S.draft.advances = []; renderTotals(); toast('Avansi su uklonjeni jer pripadaju drugom kupcu'); }
+  S.draft.client = {...c}; save(); renderBuyer(); renderAdvPick();
 }
 function flash(i){ const tr = $('#lineBody').rows[i]; if (tr) { tr.classList.remove('flash'); void tr.offsetWidth; tr.classList.add('flash'); } }
 
@@ -638,7 +691,21 @@ $('#lineBody').addEventListener('click', e => {
 });
 
 // header fields
-$('#docType').addEventListener('change', e => { S.draft.type = e.target.value; save(); renderHeader(); });
+$('#docType').addEventListener('change', e => {
+  S.draft.type = e.target.value;
+  if (S.draft.type !== 'Faktura' && (S.draft.advances || []).length) { S.draft.advances = []; toast('Odbitak avansa postoji samo na fakturi'); }
+  save(); renderHeader(); renderTotals(); renderAdvPick();
+});
+$('#advPick').addEventListener('change', e => {
+  const inv = S.invoices.find(i => i.id === e.target.value); if (!inv) return;
+  (S.draft.advances = S.draft.advances || []).push(advEntry(inv));
+  save(); renderTotals(); renderAdvPick(); toast(`Avans ${inv.number} je odbijen`);
+});
+$('#totals').addEventListener('click', e => {
+  const b = e.target.closest('[data-unadv]'); if (!b) return;
+  S.draft.advances = (S.draft.advances || []).filter(a => a.id !== b.dataset.unadv);
+  save(); renderTotals(); renderAdvPick();
+});
 $('#dDate').addEventListener('change', e => { S.draft.date = e.target.value; $('#dDateP').textContent = bsDate(e.target.value); save(); });
 $('#dDue').addEventListener('change', e => { S.draft.due = e.target.value; $('#dDueP').textContent = bsDate(e.target.value); save(); });
 $('#note').addEventListener('input', e => { S.draft.note = e.target.value; save(); });
@@ -648,9 +715,10 @@ $('#saveBtn').addEventListener('click', () => {
   const d = S.draft;
   if (!d.client) { toast('Dodajte kupca: prevucite klijenta na fakturu'); return; }
   if (!d.lines.length) { toast('Dodajte bar jednu stavku'); return; }
-  const t = calc(d.lines, S.company.inPdv);
-  const rec = JSON.parse(JSON.stringify({...d, total: t.total, paid: false}));
-  if (d.id) { const i = S.invoices.findIndex(x => x.id === d.id); rec.paid = S.invoices[i]?.paid || false; if (i >= 0) S.invoices[i] = rec; else S.invoices.push(rec); }
+  const t = calc(d.lines, S.company.inPdv, d.advances);
+  if (d.type === 'Faktura' && t.total < 0) { toast('Odbijeni avans je veći od iznosa fakture'); return; }
+  const rec = JSON.parse(JSON.stringify({...d, total: t.total, vatRows: t.rows.map(r => ({rate: r.rate, base: r.base})), paid: false}));
+  if (d.id) { const i = S.invoices.findIndex(x => x.id === d.id); if (i >= 0) { const o = S.invoices[i]; rec.paid = o.paid || false; if (o.stornoBy) rec.stornoBy = o.stornoBy; S.invoices[i] = rec; } else S.invoices.push(rec); }
   else { rec.id = uid(); S.invoices.push(rec); S.seq++; }
   toast(`${d.type} ${d.number} je sačuvana`);
   S.draft = blankDraft(S); save(); renderEditor(); renderArchive();
@@ -711,6 +779,19 @@ $('#restoreYes').addEventListener('click', () => {
 });
 $('#newBtn').addEventListener('click', () => { S.draft = blankDraft(S); save(); renderEditor(); toast('Prazna faktura spremna'); });
 
+// storno: a linked document under the next number that reverses the original
+function makeStorno(o){
+  const neg = JSON.parse(JSON.stringify(o.lines)).map(l => ({...l, qty: -l.qty}));
+  const advs = (o.advances || []).map(a => ({...a, rows: a.rows.map(r => ({rate: r.rate, base: -r.base}))}));
+  const t = calc(neg, S.company.inPdv, advs);
+  const rec = {id: uid(), type: 'Storno faktura', number: nextNo(), date: today(), due: today(), client: JSON.parse(JSON.stringify(o.client)),
+    lines: neg, advances: advs, stornoOf: o.id, ref: `Stornira: ${o.type.toLowerCase()} br. ${o.number} od ${bsDate(o.date)}`,
+    note: '', total: t.total, vatRows: t.rows.map(r => ({rate: r.rate, base: r.base})), paid: false};
+  S.invoices.push(rec); S.seq++; o.stornoBy = rec.id;
+  if (!S.draft.id) S.draft.number = nextNo();
+  save(); renderHeader(); toast(`${o.number} je stornirana storno fakturom ${rec.number}`);
+}
+
 // archive actions
 $('#archBody').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
@@ -721,9 +802,39 @@ $('#archBody').addEventListener('click', e => {
     save(); renderEditor(); document.querySelector('[data-tab="editor"]').click();
   }
   if (b.dataset.delinv) {
-    if (confirmDel === b.dataset.delinv) { S.invoices = S.invoices.filter(x => x.id !== confirmDel); confirmDel = null; save(); toast('Dokument obrisan'); }
-    else confirmDel = b.dataset.delinv;
+    const id = b.dataset.delinv;
+    if (confirmDel === id) {
+      if (S.invoices.some(x => (x.advances || []).some(a => a.id === id) || x.sourceId === id)) { toast('Dokument je povezan s drugim dokumentom. Umjesto brisanja ga stornirajte.'); }
+      else { S.invoices = S.invoices.filter(x => x.id !== id); save(); toast('Dokument obrisan'); }
+      confirmDel = null;
+    } else { confirmDel = id; confirmStorno = null; }
     renderArchive();
+  }
+  if (b.dataset.storno) {
+    const id = b.dataset.storno;
+    if (confirmStorno === id) { makeStorno(S.invoices.find(x => x.id === id)); confirmStorno = null; }
+    else { confirmStorno = id; confirmDel = null; }
+    renderArchive();
+  }
+  if (b.dataset.mkadv || b.dataset.mkinv || b.dataset.mkfinal) {
+    const src = S.invoices.find(x => x.id === (b.dataset.mkadv || b.dataset.mkinv || b.dataset.mkfinal));
+    const d = blankDraft(S);
+    d.client = JSON.parse(JSON.stringify(src.client)); d.sourceId = src.id;
+    if (b.dataset.mkadv) {
+      d.type = 'Avansna faktura'; d.lines = JSON.parse(JSON.stringify(src.lines));
+      d.ref = `Avans po predračunu br. ${src.number} od ${bsDate(src.date)}`;
+      d.note = 'Avans primljen prije isporuke. Iznos se odbija na konačnoj fakturi.';
+    } else if (b.dataset.mkinv) {
+      d.lines = JSON.parse(JSON.stringify(src.lines));
+      d.ref = `Po ${src.type === 'Ponuda' ? 'ponudi' : 'predračunu'} br. ${src.number}`;
+    } else {
+      const pre = src.sourceId && S.invoices.find(x => x.id === src.sourceId);
+      d.lines = JSON.parse(JSON.stringify((pre || src).lines));
+      d.advances = [advEntry(src)];
+      d.ref = `Konačna faktura po avansu br. ${src.number}`;
+    }
+    S.draft = d; save(); renderEditor(); document.querySelector('[data-tab="editor"]').click();
+    toast(b.dataset.mkadv ? 'Provjerite iznos avansa pa sačuvajte' : 'Provjerite stavke pa sačuvajte');
   }
 });
 
