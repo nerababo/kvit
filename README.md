@@ -17,6 +17,9 @@ Kvit je jedan HTML fajl. Nema servera, nema registracije, nema pretplate. Svi po
 - Podrška za firme izvan sistema PDV-a
 - Arhiva s pregledom: fakturisano, naplaćeno, otvoreno, kasni
 - **Ponavljajuće fakture:** mjesečno, kvartalno, polugodišnje ili godišnje. Kad dođe datum, faktura čeka pri otvaranju Kvita i izdaje se jednim klikom, s obračunskim periodom na fakturi. U nazivu stavke radi `{mjesec}` i `{godina}`
+- **Izvještaji:** promet po mjesecima, PDV po stopama, najbolji kupci i dugovanja po kašnjenju (1–30, 31–60, 61–90, preko 90 dana)
+- **Excel (.xlsx):** knjiga izlaznih faktura (KIF), promet, PDV, kupci i dugovanja, s pravim datumima i formatom brojeva
+- **e-KIF za UIO (.csv):** datoteka e-Isporuke za jedan mjesec, po tehničkom uputstvu UIO (zaglavlje, slogovi isporuka, zbirni slog)
 - **PDF:** dugme „PDF / Štampa“ pravi čistu A4 fakturu (u dijalogu odaberite „Sačuvaj kao PDF“)
 - **Sigurnosna kopija:** preuzmite sve podatke kao jedan fajl i vratite ih na bilo kojem računaru (kartica „Moja firma“)
 - Radi na računaru i mobitelu (na mobitelu se stavke dodaju dugmetom +)
@@ -48,6 +51,7 @@ PDV kolona nije obavezna (zadano 17%). Red zaglavlja se automatski preskače. Pr
 
 - **Podaci su samo u pregledniku.** Ako se obrišu podaci preglednika, brišu se i fakture. Redovno preuzimajte sigurnosnu kopiju u kartici „Moja firma“.
 - **Fiskalizacija i e-faktura:** Kvit trenutno nije povezan s fiskalnim sistemom. Novi Zakon o fiskalizaciji u FBiH uvodi obaveznu e-fakturu preko platforme Porezne uprave. Provjerite s računovođom šta važi za vašu djelatnost.
+- **e-KIF:** napravljen po tehničkom uputstvu UIO za dostavljanje podataka iz knjigovodstvenih evidencija. Kupci s PDV brojem (12 cifara) idu u kolone za obveznike PDV-a, ostali u kolone za lica koja nisu obveznici i u polje 32, 33 ili 34 PDV prijave prema entitetu sjedišta firme. Iznos fakture je sa PDV-om, storno se iskazuje negativnim iznosima, a konačna faktura iznosom umanjenim za avans. Prije prve predaje neka datoteku provjeri vaš računovođa.
 - Kvit nije pravni ni računovodstveni savjet.
 
 ## Plan razvoja
@@ -58,7 +62,9 @@ PDV kolona nije obavezna (zadano 17%). Red zaglavlja se automatski preskače. Pr
 - [ ] Prilagođen izgled fakture: logo, boje, font i raspored blokova prevlačenjem (drag & drop), uz gotove predloške
 - [ ] Vodič za nove korisnike: kratki interaktivni tutorijal pri prvom pokretanju (unos firme, prva faktura, drag & drop, PDF, sigurnosna kopija)
 - [x] Ponavljajuće fakture
-- [ ] Izvještaji i KIF u Excelu
+- [x] Izvještaji i KIF u Excelu
+- [x] e-KIF datoteka za UIO
+- [ ] e-KUF (ulazne fakture)
 - [ ] Opcionalna sinhronizacija između uređaja
 - [ ] Integracija e-fakture (FBiH)
 

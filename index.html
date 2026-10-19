@@ -222,6 +222,26 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
 .duebar{display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; justify-content:space-between; padding:10px 12px 10px 14px; border-radius:10px; background:var(--warn-bg); color:var(--warn); font-weight:500}
 .dueacts{display:flex; gap:6px; flex-wrap:wrap}
 .recpanel{margin-top:20px}
+.repbar{display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; justify-content:space-between; margin-top:14px}
+.chips{display:flex; flex-wrap:wrap; gap:6px}
+.chip{border:1px solid var(--line); background:var(--surface); border-radius:999px; padding:6px 12px; font-size:13px; font-weight:500; color:var(--muted)}
+.chip.on{background:var(--accent-soft); border-color:var(--accent); color:var(--accent)}
+.range{display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center; font-size:13px; color:var(--muted)}
+.range .field{background:var(--bg); border:1px solid var(--line); border-radius:7px; padding:6px 8px; color:var(--fg)}
+.exports{display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; margin-top:14px}
+.exports .hint{flex:1 1 260px}
+.btn:disabled{opacity:.5; cursor:not-allowed}
+.repgrid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px}
+.repcard{border:1px solid var(--line); border-radius:10px; padding:12px 14px; min-width:0}
+.repcard h3{margin:0 0 6px; font-family:var(--f-display); font-size:16px}
+.scrollx{overflow-x:auto}
+.arch.compact{min-width:0}
+.arch.compact td, .arch.compact th{padding:7px 8px; font-size:13px}
+.arch .num{font-family:var(--f-mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+.arch tr.tot td{font-weight:600; border-top:2px solid var(--fg); border-bottom:0}
+.arch td.bad{color:var(--bad)}
+@media (max-width: 880px){ .repgrid{grid-template-columns:minmax(0,1fr)} }
+@media (max-width: 560px){ .tabs button{padding:7px 9px} .tabs{flex-wrap:wrap} }
 .recform{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; margin:14px 0 18px; padding:14px; border:1px solid var(--accent); border-radius:10px; background:var(--accent-soft)}
 .recform label{display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); min-width:0}
 .recform .field{color:var(--fg); background:var(--surface)}
@@ -244,7 +264,7 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
 @media print{
   :root{color-scheme:light}
   body{background:#fff!important}
-  .top, .palette, .toolbar, .duebar, #tab-archive, #tab-company, .toast, .emptylines{display:none!important}
+  .top, .palette, .toolbar, .duebar, #tab-archive, #tab-reports, #tab-company, .toast, .emptylines{display:none!important}
   main{padding:0!important; max-width:none!important}
   .wrap{padding:0!important}
   .editor{display:block!important}
@@ -274,6 +294,7 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
     <nav class="tabs" aria-label="Glavni meni">
       <button data-tab="editor" class="on">Nova faktura</button>
       <button data-tab="archive">Arhiva <span class="count" id="archCount"></span></button>
+      <button data-tab="reports">Izvještaji</button>
       <button data-tab="company">Moja firma</button>
     </nav>
   </div>
@@ -306,7 +327,8 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
         <form class="mini" id="clientForm">
           <input id="cName" placeholder="Naziv firme ili ime" required>
           <input id="cAddr" placeholder="Adresa i grad">
-          <input id="cJib" placeholder="JIB / ID broj" inputmode="numeric">
+          <input id="cJib" class="half" placeholder="JIB (13 cifara)" inputmode="numeric">
+          <input id="cPdv" class="half" placeholder="PDV broj, ako ga ima" inputmode="numeric">
           <button class="btn small">Dodaj</button>
         </form>
       </details>
@@ -411,6 +433,34 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
     </div>
   </section>
 
+  <section id="tab-reports" hidden>
+    <div class="panel">
+      <h2>Izvještaji</h2>
+      <p class="sub">Promet, PDV i knjiga izlaznih faktura za odabrani period. Predračuni i ponude se ne računaju.</p>
+      <div class="repbar">
+        <div class="chips" role="group" aria-label="Brzi izbor perioda">
+          <button class="chip" data-per="month">Ovaj mjesec</button><button class="chip" data-per="prev">Prošli mjesec</button><button class="chip" data-per="year">Ova godina</button><button class="chip" data-per="prevyear">Prošla godina</button>
+        </div>
+        <div class="range">
+          <label for="repFrom">Od</label><input type="date" class="field" id="repFrom">
+          <label for="repTo">Do</label><input type="date" class="field" id="repTo">
+        </div>
+      </div>
+      <div class="exports">
+        <button class="btn primary" id="xlsxBtn">Preuzmi Excel (.xlsx)</button>
+        <button class="btn" id="ekifBtn">Preuzmi e-KIF za UIO (.csv)</button>
+        <p class="hint" id="ekifNote"></p>
+      </div>
+      <div class="figs" id="repFigs"></div>
+      <div class="repgrid">
+        <section class="repcard"><h3>Promet po mjesecima</h3><div class="scrollx"><table class="arch compact" id="repMonths"></table></div></section>
+        <section class="repcard" id="repVatCard"><h3>PDV po stopama</h3><div class="scrollx"><table class="arch compact" id="repVat"></table></div></section>
+        <section class="repcard"><h3>Najbolji kupci</h3><div class="scrollx"><table class="arch compact" id="repBuyers"></table></div></section>
+        <section class="repcard"><h3>Dugovanja kupaca na današnji dan</h3><div class="scrollx"><table class="arch compact" id="repAging"></table></div></section>
+      </div>
+    </div>
+  </section>
+
   <section id="tab-company" hidden>
     <div class="panel">
       <h2>Moja firma</h2>
@@ -422,6 +472,9 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
         <label>PDV broj<input class="field" id="coPdv" inputmode="numeric"></label>
         <label>Žiro račun i banka<input class="field" id="coBank"></label>
         <label>E-mail<input class="field" id="coEmail"></label>
+        <label class="wide">Sjedište firme (entitet), za e-KIF
+          <select class="field" id="coEnt"><option value="FBiH">Federacija BiH</option><option value="RS">Republika Srpska</option><option value="BD">Brčko distrikt BiH</option></select>
+        </label>
         <label class="wide chk"><input type="checkbox" id="coInPdv"> Firma je u sistemu PDV-a</label>
       </form>
     </div>
@@ -481,7 +534,7 @@ function words(n){
 const KEY = 'kvit-v1';
 function seed(){
   const clients = [
-    {id: uid(), name: 'Tehno servis d.o.o.', addr: 'Titova 12, 71000 Sarajevo', jib: '4201111111111'},
+    {id: uid(), name: 'Tehno servis d.o.o.', addr: 'Titova 12, 71000 Sarajevo', jib: '4201111111111', pdv: '201111111111'},
     {id: uid(), name: 'Kafe bar Most', addr: 'Mostarska 3, 88000 Mostar', jib: '4202222222222'},
     {id: uid(), name: 'Agencija Plavi val', addr: 'Kralja Petra I 5, 78000 Banja Luka', jib: '4403333333333'}
   ];
@@ -577,7 +630,7 @@ function renderBuyer(){
   const b = $('#buyer'), c = S.draft.client;
   b.classList.toggle('filled', !!c);
   b.innerHTML = c
-    ? `<span class="lbl">Kupac</span><p class="bn">${esc(c.name)}</p><p>${esc(c.addr)}</p><p>JIB: ${esc(c.jib)}</p>`
+    ? `<span class="lbl">Kupac</span><p class="bn">${esc(c.name)}</p><p>${esc(c.addr)}</p><p>JIB: ${esc(c.jib)}${c.pdv ? ' · PDV br.: ' + esc(c.pdv) : ''}</p>`
     : `<span class="lbl">Kupac</span><p class="ph">Prevucite klijenta ovdje</p>`;
 }
 function renderLines(){
@@ -668,17 +721,18 @@ function renderArchive(){
 function renderCompany(){
   const c = S.company;
   $('#coName').value = c.name; $('#coAddr').value = c.addr; $('#coJib').value = c.jib; $('#coPdv').value = c.pdv;
-  $('#coBank').value = c.bank; $('#coEmail').value = c.email; $('#coInPdv').checked = c.inPdv;
+  $('#coBank').value = c.bank; $('#coEmail').value = c.email; $('#coInPdv').checked = c.inPdv; $('#coEnt').value = c.ent || 'FBiH';
 }
 $('#coForm').addEventListener('input', () => {
-  Object.assign(S.company, {name: $('#coName').value, addr: $('#coAddr').value, jib: $('#coJib').value, pdv: $('#coPdv').value, bank: $('#coBank').value, email: $('#coEmail').value, inPdv: $('#coInPdv').checked});
+  Object.assign(S.company, {name: $('#coName').value, addr: $('#coAddr').value, jib: $('#coJib').value, pdv: $('#coPdv').value, bank: $('#coBank').value, email: $('#coEmail').value, inPdv: $('#coInPdv').checked, ent: $('#coEnt').value});
   save(); renderPalette(); renderEditor();
 });
 
 // tabs
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  ['editor', 'archive', 'company'].forEach(t => $('#tab-' + t).hidden = t !== b.dataset.tab);
+  ['editor', 'archive', 'reports', 'company'].forEach(t => $('#tab-' + t).hidden = t !== b.dataset.tab);
+  if (b.dataset.tab === 'reports') renderReports();
   if (b.dataset.tab === 'archive') { confirmDel = confirmStorno = confirmRec = null; renderArchive(); }
 }));
 
@@ -715,7 +769,7 @@ $('#prodForm').addEventListener('submit', e => {
 });
 $('#clientForm').addEventListener('submit', e => {
   e.preventDefault();
-  S.clients.push({id: uid(), name: $('#cName').value.trim(), addr: $('#cAddr').value.trim(), jib: $('#cJib').value.trim()});
+  S.clients.push({id: uid(), name: $('#cName').value.trim(), addr: $('#cAddr').value.trim(), jib: $('#cJib').value.trim(), pdv: $('#cPdv').value.trim()});
   e.target.reset(); save(); renderPalette(); toast('Klijent dodan');
 });
 
@@ -840,6 +894,232 @@ function makeStorno(o){
   if (!S.draft.id) S.draft.number = nextNo();
   save(); renderHeader(); toast(`${o.number} je stornirana storno fakturom ${rec.number}`);
 }
+
+// ---------- reports ----------
+const KIF_TYPES = ['Faktura', 'Avansna faktura', 'Storno faktura'];
+const p2 = n => String(n).padStart(2, '0');
+let repFrom = '', repTo = '';
+function setPeriod(kind){
+  const t = today(), y = +t.slice(0, 4), m = +t.slice(5, 7);
+  const mb = (yy, mm) => [`${yy}-${p2(mm)}-01`, `${yy}-${p2(mm)}-${p2(new Date(yy, mm, 0).getDate())}`];
+  if (kind === 'month') [repFrom, repTo] = mb(y, m);
+  if (kind === 'prev') [repFrom, repTo] = m === 1 ? mb(y - 1, 12) : mb(y, m - 1);
+  if (kind === 'year') [repFrom, repTo] = [`${y}-01-01`, `${y}-12-31`];
+  if (kind === 'prevyear') [repFrom, repTo] = [`${y - 1}-01-01`, `${y - 1}-12-31`];
+  $('#repFrom').value = repFrom; $('#repTo').value = repTo;
+  renderReports();
+}
+const isOneMonth = () => repFrom && repFrom.slice(8) === '01' && repFrom.slice(0, 7) === repTo.slice(0, 7) && +repTo.slice(8) === new Date(+repTo.slice(0, 4), +repTo.slice(5, 7), 0).getDate();
+function periodDocs(){
+  return S.invoices.filter(i => KIF_TYPES.includes(i.type) && i.date >= repFrom && i.date <= repTo)
+    .sort((a, b) => a.date.localeCompare(b.date) || parseInt(a.number) - parseInt(b.number));
+}
+// amounts as they appear on the document (final invoices already net of advances)
+function docAmounts(i){
+  const rows = (i.vatRows || calc(i.lines, S.company.inPdv, i.advances).rows).map(r => ({rate: r.rate, base: r2(r.base), tax: r2(r.base * r.rate / 100)}));
+  const base = r2(rows.reduce((a, r) => a + r.base, 0)), vat = r2(rows.reduce((a, r) => a + r.tax, 0));
+  const exempt = r2(rows.filter(r => !r.rate).reduce((a, r) => a + r.base, 0));
+  return {rows, base, vat, exempt, taxable: r2(base - exempt), total: r2(base + vat)};
+}
+const liveClient = i => S.clients.find(x => x.id === i.client.id) || {};
+const clientPdv = i => String(i.client.pdv || liveClient(i).pdv || '').replace(/\D/g, '');
+const clientJib = i => String(i.client.jib || liveClient(i).jib || '').replace(/\D/g, '');
+function typeCode(i){
+  if (i.type === 'Storno faktura') { const o = S.invoices.find(x => x.id === i.stornoOf); return o && o.type === 'Avansna faktura' ? '03' : '01'; }
+  return i.type === 'Avansna faktura' ? '03' : '01';
+}
+const counts = i => i.type !== 'Storno faktura' && !i.stornoBy;
+const monthKeys = () => { const out = []; let k = repFrom.slice(0, 7) + '-01'; while (k <= repTo && out.length < 36) { out.push(k.slice(0, 7)); k = addMonths(k, 1, 1); } return out; };
+function aging(){
+  const t = today(), map = {};
+  S.invoices.filter(i => ['Faktura', 'Avansna faktura'].includes(i.type) && !i.paid && !i.stornoBy).forEach(i => {
+    const late = Math.round((new Date(t) - new Date(i.due)) / 864e5), k = i.client.name;
+    const r = map[k] = map[k] || [0, 0, 0, 0, 0, 0];
+    r[late <= 0 ? 0 : late <= 30 ? 1 : late <= 60 ? 2 : late <= 90 ? 3 : 4] += i.total; r[5] += i.total;
+  });
+  return Object.entries(map).sort((a, b) => b[1][5] - a[1][5]);
+}
+function summary(){
+  const docs = periodDocs(), tot = {base: 0, vat: 0, total: 0, paid: 0, open: 0}, rates = {}, months = {}, buyers = {};
+  monthKeys().forEach(k => months[k] = {n: 0, base: 0, vat: 0, total: 0, paid: 0, open: 0});
+  docs.forEach(i => {
+    const a = docAmounts(i), mo = months[i.date.slice(0, 7)] || {n: 0, base: 0, vat: 0, total: 0, paid: 0, open: 0};
+    tot.base += a.base; tot.vat += a.vat; tot.total += a.total;
+    a.rows.forEach(r => { const x = rates[r.rate] = rates[r.rate] || {base: 0, tax: 0}; x.base += r.base; x.tax += r.tax; });
+    mo.base += a.base; mo.vat += a.vat; mo.total += a.total;
+    if (counts(i)) { mo.n++; if (i.paid) { tot.paid += a.total; mo.paid += a.total; } else { tot.open += a.total; mo.open += a.total; } }
+    const b = buyers[i.client.name] = buyers[i.client.name] || {n: 0, total: 0}; if (counts(i)) b.n++; b.total += a.total;
+  });
+  return {docs, tot, rates, months, buyers: Object.entries(buyers).filter(x => Math.abs(x[1].total) > 0.004).sort((a, b) => b[1].total - a[1].total)};
+}
+const MONTH_LBL = k => `${MONTHS[+k.slice(5, 7) - 1]} ${k.slice(0, 4)}`;
+function renderReports(){
+  if (!repFrom) { setPeriod('month'); return; }
+  const inPdv = S.company.inPdv, sm = summary(), t = sm.tot;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  ['month', 'prev', 'year', 'prevyear'].forEach(k => { const save = [repFrom, repTo]; /* mark chip whose range matches */
+    const y = +today().slice(0, 4), m = +today().slice(5, 7);
+    const want = k === 'month' ? [`${y}-${p2(m)}-01`] : k === 'prev' ? [m === 1 ? `${y - 1}-12-01` : `${y}-${p2(m - 1)}-01`] : k === 'year' ? [`${y}-01-01`, `${y}-12-31`] : [`${y - 1}-01-01`, `${y - 1}-12-31`];
+    const hit = want.length === 1 ? (isOneMonth() && repFrom === want[0]) : (save[0] === want[0] && save[1] === want[1]);
+    if (hit) document.querySelector(`.chip[data-per="${k}"]`).classList.add('on'); });
+  $('#repFigs').innerHTML = `
+    <div class="fig"><span>Fakturisano${inPdv ? ' sa PDV' : ''}</span><b>${fmt(t.total)}</b></div>
+    ${inPdv ? `<div class="fig"><span>Osnovica</span><b>${fmt(t.base)}</b></div><div class="fig"><span>Izlazni PDV</span><b>${fmt(t.vat)}</b></div>` : ''}
+    <div class="fig"><span>Naplaćeno</span><b>${fmt(t.paid)}</b></div>
+    <div class="fig late"><span>Otvoreno</span><b>${fmt(t.open)}</b></div>`;
+  const none = cols => `<tr><td colspan="${cols}" class="empty">U ovom periodu nema izdanih faktura.</td></tr>`;
+  const mk = Object.keys(sm.months);
+  $('#repMonths').innerHTML = `<thead><tr><th>Mjesec</th><th class="r">Faktura</th><th class="r">${inPdv ? 'Sa PDV' : 'Iznos'}</th><th class="r">Naplaćeno</th><th class="r">Otvoreno</th></tr></thead><tbody>` +
+    mk.map(k => { const m = sm.months[k]; return `<tr><td>${MONTH_LBL(k)}</td><td class="num">${m.n}</td><td class="num">${fmt(m.total)}</td><td class="num">${fmt(m.paid)}</td><td class="num">${fmt(m.open)}</td></tr>`; }).join('') +
+    (mk.length > 1 ? `<tr class="tot"><td>Ukupno</td><td class="num">${mk.reduce((a, k) => a + sm.months[k].n, 0)}</td><td class="num">${fmt(t.total)}</td><td class="num">${fmt(t.paid)}</td><td class="num">${fmt(t.open)}</td></tr>` : '') + '</tbody>';
+  $('#repVatCard').hidden = !inPdv;
+  const rk = Object.keys(sm.rates).map(Number).sort((a, b) => b - a);
+  $('#repVat').innerHTML = `<thead><tr><th>Stopa</th><th class="r">Osnovica</th><th class="r">PDV</th></tr></thead><tbody>` +
+    (rk.length ? rk.map(r => `<tr><td>${r}%</td><td class="num">${fmt(sm.rates[r].base)}</td><td class="num">${fmt(sm.rates[r].tax)}</td></tr>`).join('') + `<tr class="tot"><td>Ukupno</td><td class="num">${fmt(t.base)}</td><td class="num">${fmt(t.vat)}</td></tr>` : none(3)) + '</tbody>';
+  $('#repBuyers').innerHTML = `<thead><tr><th>Kupac</th><th class="r">Faktura</th><th class="r">Iznos</th></tr></thead><tbody>` +
+    (sm.buyers.length ? sm.buyers.slice(0, 10).map(([n, b]) => `<tr><td>${esc(n)}</td><td class="num">${b.n}</td><td class="num">${fmt(b.total)}</td></tr>`).join('') : none(3)) + '</tbody>';
+  const ag = aging();
+  $('#repAging').innerHTML = `<thead><tr><th>Kupac</th><th class="r">Nije dospjelo</th><th class="r">1–30 dana</th><th class="r">31–60</th><th class="r">61–90</th><th class="r">Preko 90</th><th class="r">Ukupno</th></tr></thead><tbody>` +
+    (ag.length ? ag.map(([n, r]) => `<tr><td>${esc(n)}</td>${r.map((v, k) => `<td class="num${k > 0 && k < 5 && v > 0 ? ' bad' : ''}">${v ? fmt(v) : '–'}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="7" class="empty">Nema otvorenih faktura.</td></tr>`) + '</tbody>';
+  // e-KIF availability
+  const pdv = String(S.company.pdv || '').replace(/\D/g, '');
+  const why = !inPdv ? 'e-KIF predaju samo obveznici PDV-a.' : pdv.length !== 12 ? 'Za e-KIF unesite PDV broj firme (12 cifara) u kartici „Moja firma“.' : !isOneMonth() ? 'e-KIF se pravi za jedan kalendarski mjesec. Odaberite „Ovaj mjesec“ ili „Prošli mjesec“.' : '';
+  $('#ekifBtn').disabled = !!why;
+  $('#ekifNote').textContent = why || `Datoteka e-Isporuke za ${MONTH_LBL(repFrom.slice(0, 7))}, po tehničkom uputstvu UIO. Prije prve predaje neka je provjeri vaš računovođa.`;
+}
+document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => setPeriod(c.dataset.per)));
+['#repFrom', '#repTo'].forEach(id => $(id).addEventListener('change', () => {
+  repFrom = $('#repFrom').value || repFrom; repTo = $('#repTo').value || repTo;
+  if (repFrom > repTo) { [repFrom, repTo] = [repTo, repFrom]; $('#repFrom').value = repFrom; $('#repTo').value = repTo; }
+  renderReports();
+}));
+function downloadBlob(blob, name){
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ---------- minimal .xlsx writer (no library: SpreadsheetML + stored zip) ----------
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(d){ let c = 0xFFFFFFFF; for (let i = 0; i < d.length; i++) c = CRC_T[(c ^ d[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStore(files){
+  const enc = new TextEncoder(), parts = [], central = []; let off = 0;
+  const u16 = n => [n & 255, (n >> 8) & 255], u32 = n => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+  files.forEach(f => {
+    const name = enc.encode(f.name), data = enc.encode(f.text), crc = crc32(data);
+    const common = [...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(name.length), ...u16(0)];
+    const local = new Uint8Array([...u32(0x04034b50), ...common]);
+    parts.push(local, name, data);
+    central.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...common, ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off)]), name);
+    off += local.length + name.length + data.length;
+  });
+  const size = central.reduce((a, c) => a + c.length, 0);
+  const end = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(size), ...u32(off), ...u16(0)]);
+  return new Blob([...parts, ...central, end], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+const xe = s => String(s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const colRef = i => { let s = ''; i++; while (i) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+const xlDate = s => (Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) - Date.UTC(1899, 11, 30)) / 864e5;
+// cell styles: 0 text, 1 header, 2 money, 3 bold money, 4 integer, 5 date, 6 title, 7 bold text
+const X = {h: v => ({v, s: 1}), m: v => ({v: r2(v), s: 2}), mb: v => ({v: r2(v), s: 3}), i: v => ({v, s: 4}), d: v => ({v: xlDate(v), s: 5}), t: v => ({v, s: 6}), b: v => ({v, s: 7})};
+function sheetXml(sh){
+  const rows = sh.rows.map((r, ri) => `<row r="${ri + 1}">` + r.map((c, ci) => {
+    if (c == null || c === '') return '';
+    const ref = colRef(ci) + (ri + 1), v = typeof c === 'object' ? c.v : c, st = typeof c === 'object' ? c.s : 0;
+    return typeof v === 'number' ? `<c r="${ref}" s="${st || 4}"><v>${v}</v></c>` : `<c r="${ref}" s="${st}" t="inlineStr"><is><t xml:space="preserve">${xe(v)}</t></is></c>`;
+  }).join('') + '</row>').join('');
+  const fr = sh.freeze || 0;
+  const pane = fr ? `<pane ySplit="${fr}" topLeftCell="A${fr + 1}" activePane="bottomLeft" state="frozen"/>` : '';
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0">${pane}</sheetView></sheetViews>` +
+    `<cols>${sh.cols.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols><sheetData>${rows}</sheetData></worksheet>`;
+}
+function workbook(sheets){
+  const ns = 'http://schemas.openxmlformats.org/', files = [];
+  files.push({name: '[Content_Types].xml', text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="${ns}package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`});
+  files.push({name: '_rels/.rels', text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${ns}package/2006/relationships"><Relationship Id="rId1" Type="${ns}officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`});
+  files.push({name: 'xl/workbook.xml', text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="${ns}spreadsheetml/2006/main" xmlns:r="${ns}officeDocument/2006/relationships"><sheets>${sheets.map((sh, i) => `<sheet name="${xe(sh.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets></workbook>`});
+  files.push({name: 'xl/_rels/workbook.xml.rels', text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${ns}package/2006/relationships">${sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="${ns}officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}<Relationship Id="rId${sheets.length + 1}" Type="${ns}officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`});
+  files.push({name: 'xl/styles.xml', text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="${ns}spreadsheetml/2006/main"><numFmts count="2"><numFmt numFmtId="164" formatCode="#,##0.00"/><numFmt numFmtId="165" formatCode="dd.mm.yyyy"/></numFmts>` +
+    `<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><name val="Calibri"/></font></fonts>` +
+    `<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE1E2FA"/><bgColor indexed="64"/></patternFill></fill></fills>` +
+    `<borders count="3"><border><left/><right/><top/><bottom/><diagonal/></border><border><left/><right/><top/><bottom style="thin"><color rgb="FF3B41C4"/></bottom><diagonal/></border><border><left/><right/><top style="thin"/><bottom/><diagonal/></border></borders>` +
+    `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="8">` +
+    `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` +
+    `<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment wrapText="1" vertical="center"/></xf>` +
+    `<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>` +
+    `<xf numFmtId="164" fontId="1" fillId="0" borderId="2" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1"/>` +
+    `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` +
+    `<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>` +
+    `<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>` +
+    `<xf numFmtId="0" fontId="1" fillId="0" borderId="2" xfId="0" applyFont="1" applyBorder="1"/>` +
+    `</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`});
+  sheets.forEach((sh, i) => files.push({name: `xl/worksheets/sheet${i + 1}.xml`, text: sheetXml(sh)}));
+  return zipStore(files);
+}
+function buildReportXlsx(){
+  const c = S.company, inPdv = c.inPdv, sm = summary(), per = `${bsDate(repFrom)} – ${bsDate(repTo)}`;
+  const top = title => [[X.t(title)], [`${c.name}${c.jib ? ', JIB ' + c.jib : ''}${inPdv && c.pdv ? ', PDV br. ' + c.pdv : ''}`], [`Period: ${per}`], []];
+  // KIF
+  const kh = inPdv
+    ? ['Red. br.', 'Tip dok.', 'Broj fakture', 'Datum', 'Kupac', 'Sjedište kupca', 'PDV broj kupca', 'JIB kupca', 'Iznos fakture sa PDV', 'Oslobođeno PDV-a', 'Osnovica, kupci obveznici PDV-a', 'PDV, kupci obveznici PDV-a', 'Osnovica, kupci koji nisu obveznici', 'PDV, kupci koji nisu obveznici', 'Vrsta', 'Veza']
+    : ['Red. br.', 'Broj fakture', 'Datum', 'Kupac', 'Sjedište kupca', 'JIB kupca', 'Iznos fakture', 'Vrsta', 'Veza'];
+  const sums = Array(6).fill(0);
+  const kr = sm.docs.map((i, n) => {
+    const a = docAmounts(i), reg = clientPdv(i).length === 12;
+    if (!inPdv) return [X.i(n + 1), i.number, X.d(i.date), i.client.name, i.client.addr || '', clientJib(i), X.m(a.total), i.type, i.ref || ''];
+    const f = [a.total, a.exempt, reg ? a.taxable : 0, reg ? a.vat : 0, reg ? 0 : a.taxable, reg ? 0 : a.vat]; f.forEach((v, k) => sums[k] += v);
+    return [X.i(n + 1), typeCode(i), i.number, X.d(i.date), i.client.name, i.client.addr || '', reg ? clientPdv(i) : '', reg ? '' : clientJib(i), ...f.map(X.m), i.type, i.ref || ''];
+  });
+  const ktot = inPdv ? [X.b('Ukupno'), '', '', '', '', '', '', '', ...sums.map(X.mb)] : [X.b('Ukupno'), '', '', '', '', '', X.mb(sm.tot.total)];
+  const kif = {name: 'KIF', freeze: 5, cols: inPdv ? [8, 8, 12, 11, 28, 28, 15, 15, 15, 14, 16, 15, 16, 15, 16, 34] : [8, 12, 11, 30, 30, 15, 15, 16, 34],
+    rows: [...top('Knjiga izlaznih faktura (KIF)'), kh.map(X.h), ...kr, ...(kr.length ? [ktot] : [['U ovom periodu nema izdanih faktura.']])]};
+  // turnover by month
+  const mk = Object.keys(sm.months);
+  const mon = {name: 'Promet po mjesecima', freeze: 5, cols: [18, 10, 15, 15, 15, 15, 15],
+    rows: [...top('Promet po mjesecima'), ['Mjesec', 'Faktura', 'Osnovica', 'PDV', 'Ukupno', 'Naplaćeno', 'Otvoreno'].map(X.h),
+      ...mk.map(k => { const m = sm.months[k]; return [MONTH_LBL(k), X.i(m.n), X.m(m.base), X.m(m.vat), X.m(m.total), X.m(m.paid), X.m(m.open)]; }),
+      [X.b('Ukupno'), X.i(mk.reduce((a, k) => a + sm.months[k].n, 0)), X.mb(sm.tot.base), X.mb(sm.tot.vat), X.mb(sm.tot.total), X.mb(sm.tot.paid), X.mb(sm.tot.open)]]};
+  const sheets = [kif, mon];
+  if (inPdv) {
+    const rk = Object.keys(sm.rates).map(Number).sort((a, b) => b - a);
+    sheets.push({name: 'PDV po stopama', freeze: 5, cols: [12, 16, 16],
+      rows: [...top('PDV po stopama'), ['Stopa', 'Osnovica', 'PDV'].map(X.h), ...rk.map(r => [`${r}%`, X.m(sm.rates[r].base), X.m(sm.rates[r].tax)]), [X.b('Ukupno'), X.mb(sm.tot.base), X.mb(sm.tot.vat)]]});
+  }
+  sheets.push({name: 'Kupci', freeze: 5, cols: [34, 10, 16],
+    rows: [...top('Promet po kupcima'), ['Kupac', 'Faktura', 'Iznos'].map(X.h), ...sm.buyers.map(([n, b]) => [n, X.i(b.n), X.m(b.total)])]});
+  const ag = aging();
+  sheets.push({name: 'Dugovanja', freeze: 5, cols: [34, 15, 14, 14, 14, 14, 15],
+    rows: [[X.t('Dugovanja kupaca')], [c.name], [`Stanje na dan ${bsDate(today())}`], [], ['Kupac', 'Nije dospjelo', '1–30 dana', '31–60 dana', '61–90 dana', 'Preko 90 dana', 'Ukupno'].map(X.h),
+      ...ag.map(([n, r]) => [n, ...r.map(X.m)])]});
+  return workbook(sheets);
+}
+$('#xlsxBtn').addEventListener('click', () => {
+  downloadBlob(buildReportXlsx(), `Kvit-izvjestaj-${repFrom}_${repTo}.xlsx`);
+  toast('Excel izvještaj preuzet');
+});
+
+// ---------- e-KIF (UIO "e-Isporuke" file) ----------
+function buildEkif(){
+  const c = S.company, pdv = String(c.pdv || '').replace(/\D/g, ''), per = repFrom.slice(2, 4) + repFrom.slice(5, 7);
+  const clean = (v, n) => String(v || '').replace(/[;\r\n\t]+/g, ' ').trim().slice(0, n), amt = n => r2(n).toFixed(2);
+  const ent = {FBiH: 0, RS: 1, BD: 2}[c.ent || 'FBiH'] || 0;
+  const out = [[1, pdv, per, 2, '01', today(), new Date().toTimeString().slice(0, 8)].join(';')], sums = Array(11).fill(0);
+  const docs = periodDocs();
+  docs.forEach((i, n) => {
+    const a = docAmounts(i), cp = clientPdv(i), cj = clientJib(i), reg = cp.length === 12;
+    const f = [a.total, 0, 0, a.exempt, reg ? a.taxable : 0, reg ? a.vat : 0, reg ? 0 : a.taxable, reg ? 0 : a.vat, 0, 0, 0];
+    if (!reg) f[8 + ent] = a.vat; // final consumption by entity: fields 32 / 33 / 34 of the VAT return
+    f.forEach((v, k) => sums[k] += v);
+    out.push([2, per, n + 1, typeCode(i), clean(i.number, 100), i.date, clean(i.client.name, 100), clean(i.client.addr, 100), reg ? cp : '', !reg && cj.length === 13 ? cj : '', ...f.map(amt)].join(';'));
+  });
+  out.push([3, ...sums.map(amt), docs.length].join(';'));
+  return {name: `${pdv}_${per}_2_01.csv`, text: out.join('\r\n') + '\r\n', count: docs.length};
+}
+$('#ekifBtn').addEventListener('click', () => {
+  const f = buildEkif();
+  downloadBlob(new Blob([f.text], {type: 'text/csv;charset=utf-8'}), f.name);
+  toast(`e-KIF preuzet: ${f.count} ${form(f.count, 'dokument', 'dokumenta', 'dokumenata')}`);
+});
 
 // ---------- recurring invoices ----------
 const MONTHS = ['januar', 'februar', 'mart', 'april', 'maj', 'juni', 'juli', 'august', 'septembar', 'oktobar', 'novembar', 'decembar'];
