@@ -13,6 +13,7 @@ Kvit je jedan HTML fajl. Nema servera, nema registracije, nema pretplate. Svi po
 - **Avansna faktura:** napravite je iz predračuna, a na konačnoj fakturi avans se odbija po stopama PDV-a
 - **Storno faktura:** pogrešna faktura se ne briše nego stornira, storno dobija sljedeći broj i vezu na original
 - Automatski broj dokumenta, PDV po stopama, rabat po stavci
+- **Kolone po izboru:** meni „Kolone“ sakriva redni broj, jedinicu mjere, količinu, cijenu, rabat ili PDV % na svim dokumentima. Kad je cijena skrivena, iznos stavke se upisuje direktno
 - Iznos slovima („dvije hiljade … KM i 50/100“)
 - Podrška za firme izvan sistema PDV-a
 - Arhiva s pregledom: fakturisano, naplaćeno, otvoreno, kasni

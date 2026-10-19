@@ -121,7 +121,7 @@ body.drag-line .removehint{display:block}
 
 .tablebox{overflow-x:auto; margin-inline:-6px; padding-inline:6px}
 table.lines{width:100%; border-collapse:collapse; min-width:680px; font-size:13.5px}
-.lines th{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--paper-muted); text-align:left; font-weight:600; padding:8px 6px; border-bottom:1px solid var(--paper-ink)}
+.lines th{white-space:nowrap; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--paper-muted); text-align:left; font-weight:600; padding:8px 6px; border-bottom:1px solid var(--paper-ink)}
 .lines th.r, .lines td.r{text-align:right}
 .lines td{padding:4px 6px; border-bottom:1px solid var(--paper-line); vertical-align:middle}
 .lines tr.ins-before td{box-shadow:inset 0 3px 0 var(--stamp)}
@@ -219,6 +219,15 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
 .pill.storno{background:var(--surface-2); color:var(--muted)}
 .arch .reftxt{display:block; font-size:12px; color:var(--muted)}
 .btn.link{border-color:transparent; color:var(--accent); padding-inline:6px}
+.colmenu{position:relative}
+.colmenu summary{list-style:none; cursor:pointer}
+.colmenu summary::-webkit-details-marker{display:none}
+.colmenu[open] summary{border-color:var(--accent); color:var(--accent)}
+.colpop{position:absolute; right:0; top:calc(100% + 6px); z-index:20; width:240px; display:flex; flex-direction:column; gap:8px; padding:12px 14px; background:var(--surface); border:1px solid var(--line); border-radius:10px; box-shadow:0 12px 28px -12px rgba(20,24,60,.35)}
+.colpop label{display:flex; gap:8px; align-items:center; font-size:13.5px}
+.colpop .always{color:var(--muted)}
+.hide-unit .c-unit, .hide-unit .k-unit, .hide-qty .c-qty, .hide-qty .k-qty, .hide-price .c-price, .hide-price .k-price, .hide-disc .c-disc, .hide-disc .k-disc, .hide-vat .vatcol, .hide-rn .rn{display:none}
+.amt .in.num{font-weight:500}
 .duebar{display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; justify-content:space-between; padding:10px 12px 10px 14px; border-radius:10px; background:var(--warn-bg); color:var(--warn); font-weight:500}
 .dueacts{display:flex; gap:6px; flex-wrap:wrap}
 .recpanel{margin-top:20px}
@@ -284,6 +293,8 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
   .p-foot textarea{border:0; resize:none; padding:0; overflow:hidden}
   .p-foot textarea:placeholder-shown{display:none}
   .sum, .p-foot{break-inside:avoid}
+  .hide-rn .lines th:first-child, .hide-rn .lines td.h{display:none}
+  .amt .in.num{font-weight:400}
 }
 </style>
 </head>
@@ -351,6 +362,20 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
           <span class="count" id="editing"></span>
         </div>
         <div class="lft">
+          <details class="colmenu" id="colMenu">
+            <summary class="btn">Kolone</summary>
+            <div class="colpop" role="group" aria-label="Kolone na fakturi">
+              <p class="hint">Prikaži na svim dokumentima:</p>
+              <label><input type="checkbox" data-col="rn"> Redni broj (#)</label>
+              <label><input type="checkbox" data-col="unit"> Jedinica mjere</label>
+              <label><input type="checkbox" data-col="qty"> Količina</label>
+              <label><input type="checkbox" data-col="price"> Cijena</label>
+              <label><input type="checkbox" data-col="disc"> Rabat %</label>
+              <label><input type="checkbox" data-col="vat"> PDV %</label>
+              <label class="always"><input type="checkbox" checked disabled> Naziv i iznos (uvijek)</label>
+              <p class="hint">Kad je cijena skrivena, iznos stavke upisujete direktno u kolonu Iznos.</p>
+            </div>
+          </details>
           <button class="btn" id="newBtn">Nova</button>
           <button class="btn" id="pdfBtn" title="Otvara dijalog za štampu. Odaberite „Sačuvaj kao PDF“.">PDF / Štampa</button>
           <button class="btn primary" id="saveBtn">Sačuvaj u arhivu</button>
@@ -379,7 +404,7 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
         <div class="tablebox">
           <table class="lines">
             <thead><tr>
-              <th>#</th><th class="c-name">Naziv</th><th class="c-unit">Jed.</th><th class="c-qty r">Kol.</th>
+              <th><span class="rn">#</span></th><th class="c-name">Naziv</th><th class="c-unit">Jed.</th><th class="c-qty r">Kol.</th>
               <th class="c-price r">Cijena</th><th class="c-disc r">Rabat %</th><th class="c-vat r vatcol">PDV %</th>
               <th class="c-amt r">Iznos</th><th class="c-x"><span hidden>Ukloni</span></th>
             </tr></thead>
@@ -620,6 +645,7 @@ function renderHeader(){
     : c.bank ? `Uplatu izvršiti na račun <b>${esc(c.bank)}</b>, s pozivom na broj ${esc(d.number)}.` : '';
   $('#pdvNote').textContent = c.inPdv ? '' : 'Obveznik nije u sistemu PDV-a.';
   document.querySelectorAll('.vatcol').forEach(el => el.hidden = !c.inPdv);
+  applyCols();
   const tpl = d.tplId && S.recurring.find(x => x.id === d.tplId);
   $('#editing').textContent = tpl ? `Uređujete ponavljajuću fakturu (${(EVERY[tpl.every] || '').toLowerCase()}, sljedeća ${bsDate(tpl.nextDate)})` : d.id ? 'Uređujete sačuvani dokument' : '';
   $('#saveBtn').textContent = tpl ? 'Sačuvaj ponavljajuću' : 'Sačuvaj u arhivu';
@@ -637,14 +663,14 @@ function renderLines(){
   const inPdv = S.company.inPdv;
   $('#lineBody').innerHTML = S.draft.lines.map((l, i) => `
     <tr data-i="${i}">
-      <td class="h" draggable="true" data-drag="line" data-id="${i}" title="Prevucite za promjenu redoslijeda"><span class="dots">⋮⋮</span>${i + 1}</td>
+      <td class="h" draggable="true" data-drag="line" data-id="${i}" title="Prevucite za promjenu redoslijeda"><span class="dots">⋮⋮</span><span class="rn">${i + 1}</span></td>
       <td><input class="in" data-f="name" value="${esc(l.name)}" aria-label="Naziv stavke ${i + 1}"></td>
-      <td><input class="in" data-f="unit" value="${esc(l.unit)}" aria-label="Jedinica mjere"></td>
-      <td><input class="in num" data-f="qty" inputmode="decimal" value="${numStr(l.qty)}" aria-label="Količina"></td>
-      <td><input class="in num" data-f="price" inputmode="decimal" value="${fmt(l.price)}" aria-label="Cijena"></td>
-      <td><input class="in num" data-f="disc" inputmode="decimal" value="${numStr(l.disc)}" aria-label="Rabat u procentima"></td>
+      <td class="k-unit"><input class="in" data-f="unit" value="${esc(l.unit)}" aria-label="Jedinica mjere"></td>
+      <td class="k-qty"><input class="in num" data-f="qty" inputmode="decimal" value="${numStr(l.qty)}" aria-label="Količina"></td>
+      <td class="k-price"><input class="in num" data-f="price" inputmode="decimal" value="${fmt(l.price)}" aria-label="Cijena"></td>
+      <td class="k-disc"><input class="in num" data-f="disc" inputmode="decimal" value="${numStr(l.disc)}" aria-label="Rabat u procentima"></td>
       <td class="vatcol"${inPdv ? '' : ' hidden'}><input class="in num" data-f="vat" inputmode="decimal" value="${numStr(l.vat)}" aria-label="PDV stopa"></td>
-      <td class="amt">${fmt(lineNet(l))}</td>
+      <td class="amt">${cols().price ? fmt(lineNet(l)) : `<input class="in num" data-f="amt" inputmode="decimal" value="${fmt(lineNet(l))}" aria-label="Iznos stavke ${i + 1}">`}</td>
       <td><button class="x" data-del="${i}" aria-label="Ukloni stavku ${i + 1}">×</button></td>
     </tr>`).join('');
   $('#emptyLines').hidden = S.draft.lines.length > 0;
@@ -778,11 +804,13 @@ $('#lineBody').addEventListener('input', e => {
   const inp = e.target.closest('input'); if (!inp) return;
   const tr = inp.closest('tr'), l = S.draft.lines[+tr.dataset.i], f = inp.dataset.f;
   if (f === 'name' || f === 'unit') l[f] = inp.value;
+  else if (f === 'amt') { const n = parseNum(inp.value), q = l.qty || 1, d = 1 - (l.disc || 0) / 100; l.price = isNaN(n) ? 0 : d > 0 ? n / (q * d) : n; }
   else { const n = parseNum(inp.value); l[f] = isNaN(n) ? 0 : n; }
-  tr.querySelector('.amt').textContent = fmt(lineNet(l));
+  const amtCell = tr.querySelector('.amt');
+  if (f !== 'amt') { const ai = amtCell.querySelector('input'); if (ai) ai.value = fmt(lineNet(l)); else amtCell.textContent = fmt(lineNet(l)); }
   save(); renderTotals();
 });
-$('#lineBody').addEventListener('change', e => { const inp = e.target.closest('input'); if (inp && inp.dataset.f === 'price') inp.value = fmt(S.draft.lines[+inp.closest('tr').dataset.i].price); });
+$('#lineBody').addEventListener('change', e => { const inp = e.target.closest('input'); if (!inp) return; const l = S.draft.lines[+inp.closest('tr').dataset.i]; if (inp.dataset.f === 'price') inp.value = fmt(l.price); if (inp.dataset.f === 'amt') inp.value = fmt(lineNet(l)); });
 $('#lineBody').addEventListener('click', e => {
   const b = e.target.closest('[data-del]'); if (!b) return;
   S.draft.lines.splice(+b.dataset.del, 1); save(); renderLines();
@@ -894,6 +922,23 @@ function makeStorno(o){
   if (!S.draft.id) S.draft.number = nextNo();
   save(); renderHeader(); toast(`${o.number} je stornirana storno fakturom ${rec.number}`);
 }
+
+// ---------- column visibility (company-wide layout setting) ----------
+const COLS = ['rn', 'unit', 'qty', 'price', 'disc', 'vat'];
+const cols = () => Object.assign({rn: true, unit: true, qty: true, price: true, disc: true, vat: true}, S.company.cols || {});
+function applyCols(){
+  const c = cols(), p = $('#paper');
+  COLS.forEach(k => p.classList.toggle('hide-' + k, !c[k]));
+  document.querySelectorAll('[data-col]').forEach(x => x.checked = !!c[x.dataset.col]);
+  document.querySelector('[data-col="vat"]').closest('label').hidden = !S.company.inPdv;
+}
+$('#colMenu').addEventListener('change', e => {
+  const k = e.target.dataset.col; if (!k) return;
+  S.company.cols = {...cols(), [k]: e.target.checked};
+  save(); applyCols(); renderLines();
+  if (k === 'disc' && !e.target.checked && S.draft.lines.some(l => l.disc)) toast('Neke stavke imaju rabat. Iznosi ga i dalje uključuju.');
+});
+document.addEventListener('click', e => { const m = $('#colMenu'); if (m.open && !m.contains(e.target)) m.open = false; });
 
 // ---------- reports ----------
 const KIF_TYPES = ['Faktura', 'Avansna faktura', 'Storno faktura'];
