@@ -16,6 +16,7 @@ Kvit je jedan HTML fajl. Nema servera, nema registracije, nema pretplate. Svi po
 - Iznos slovima („dvije hiljade … KM i 50/100“)
 - Podrška za firme izvan sistema PDV-a
 - Arhiva s pregledom: fakturisano, naplaćeno, otvoreno, kasni
+- **Ponavljajuće fakture:** mjesečno, kvartalno, polugodišnje ili godišnje. Kad dođe datum, faktura čeka pri otvaranju Kvita i izdaje se jednim klikom, s obračunskim periodom na fakturi. U nazivu stavke radi `{mjesec}` i `{godina}`
 - **PDF:** dugme „PDF / Štampa“ pravi čistu A4 fakturu (u dijalogu odaberite „Sačuvaj kao PDF“)
 - **Sigurnosna kopija:** preuzmite sve podatke kao jedan fajl i vratite ih na bilo kojem računaru (kartica „Moja firma“)
 - Radi na računaru i mobitelu (na mobitelu se stavke dodaju dugmetom +)
@@ -56,7 +57,7 @@ PDV kolona nije obavezna (zadano 17%). Red zaglavlja se automatski preskače. Pr
 - [x] Avansna i storno faktura
 - [ ] Prilagođen izgled fakture: logo, boje, font i raspored blokova prevlačenjem (drag & drop), uz gotove predloške
 - [ ] Vodič za nove korisnike: kratki interaktivni tutorijal pri prvom pokretanju (unos firme, prva faktura, drag & drop, PDF, sigurnosna kopija)
-- [ ] Ponavljajuće fakture
+- [x] Ponavljajuće fakture
 - [ ] Izvještaji i KIF u Excelu
 - [ ] Opcionalna sinhronizacija između uređaja
 - [ ] Integracija e-fakture (FBiH)
