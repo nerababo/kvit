@@ -159,7 +159,12 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
 .words i{color:var(--paper-ink); font-style:normal}
 .p-foot{display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:24px; margin-top:28px; padding-top:16px; border-top:1px solid var(--paper-line); font-size:13px}
 .p-foot p{margin:0}
-.p-foot textarea{width:100%; min-height:54px; resize:vertical; border:1px solid var(--paper-line); border-radius:6px; padding:6px 8px; background:transparent; color:var(--paper-ink); margin-top:8px; font-size:13px}
+.pinfo{display:flex; flex-direction:column; gap:14px; min-width:0}
+.pblock p{margin:0; line-height:1.55}
+.p-foot textarea{display:block; width:calc(100% + 10px); margin:0 -5px; padding:2px 4px; min-height:0; resize:none; overflow:hidden; border:1px dashed transparent; border-radius:4px; background:transparent; color:var(--paper-ink); font:inherit; font-size:13px; line-height:1.55}
+.p-foot textarea:hover{border-color:var(--paper-line)}
+.p-foot textarea:focus{border-color:var(--stamp); background:#fff; outline:none}
+.p-foot textarea::placeholder{color:var(--paper-muted); font-style:italic}
 .sign{text-align:center; align-self:end; color:var(--paper-muted)}
 .sign .ln{border-top:1px solid var(--paper-ink); margin:36px 12px 4px}
 .mp{display:inline-block; border:1.5px solid var(--paper-line); border-radius:50%; width:56px; height:56px; line-height:53px; font-size:11px; margin-bottom:-24px; color:var(--paper-muted)}
@@ -293,8 +298,9 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
   .pdate{display:inline}
   .paper{background:#fff!important}
   .buyer{border:0!important; padding:0; background:transparent!important; min-height:0}
-  .p-foot textarea{border:0; resize:none; padding:0; overflow:hidden}
-  .p-foot textarea:placeholder-shown{display:none}
+  .p-foot textarea{border-color:transparent!important; background:transparent!important; margin:0; padding:0; width:100%}
+  .pblock.is-empty{display:none}
+  .p-foot{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)!important}
   .sum, .p-foot{break-inside:avoid}
   .hide-rn .lines th:first-child, .hide-rn .lines td.h{display:none}
   .amt .in.num{font-weight:400}
@@ -421,8 +427,10 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
 
         <footer class="p-foot">
           <div>
-            <p id="bankLine"></p>
-            <textarea id="note" aria-label="Napomena na fakturi"></textarea>
+            <div class="pinfo">
+              <div class="pblock" id="payBlock"><span class="lbl">Plaćanje</span><p id="bankLine"></p></div>
+              <div class="pblock" id="noteBlock"><span class="lbl">Napomena</span><textarea id="note" rows="1" placeholder="Dodajte napomenu, npr. uslove isporuke ili zahvalu" aria-label="Napomena na fakturi"></textarea></div>
+            </div>
           </div>
           <div class="sign"><span class="mp">M.P.</span><div class="ln"></div>Ovlašteno lice</div>
         </footer>
@@ -652,6 +660,8 @@ function renderHeader(){
   $('#note').value = d.note || '';
   $('#bankLine').innerHTML = isStorno ? 'Ovim dokumentom poništava se navedena faktura. Uplata se ne vrši.'
     : c.bank ? `Uplatu izvršiti na račun <b>${esc(c.bank)}</b>, s pozivom na broj ${esc(d.number)}.` : '';
+  $('#payBlock').hidden = !$('#bankLine').innerHTML;
+  fitNote();
   $('#pdvNote').textContent = c.inPdv ? '' : 'Obveznik nije u sistemu PDV-a.';
   document.querySelectorAll('.vatcol').forEach(el => el.hidden = !c.inPdv);
   applyCols();
@@ -843,7 +853,9 @@ $('#totals').addEventListener('click', e => {
 });
 $('#dDate').addEventListener('change', e => { S.draft.date = e.target.value; $('#dDateP').textContent = bsDate(e.target.value); save(); });
 $('#dDue').addEventListener('change', e => { S.draft.due = e.target.value; $('#dDueP').textContent = bsDate(e.target.value); save(); });
-$('#note').addEventListener('input', e => { S.draft.note = e.target.value; save(); });
+function fitNote(){ const t = $('#note'); t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; $('#noteBlock').classList.toggle('is-empty', !t.value.trim()); }
+$('#note').addEventListener('input', e => { S.draft.note = e.target.value; fitNote(); save(); });
+document.querySelector('[data-tab="editor"]').addEventListener('click', () => requestAnimationFrame(fitNote));
 
 // save / new
 $('#saveBtn').addEventListener('click', () => {
