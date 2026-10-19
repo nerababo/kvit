@@ -54,7 +54,7 @@ PDV kolona nije obavezna (zadano 17%). Red zaglavlja se automatski preskače. Pr
 - [x] Izvoz u PDF
 - [x] Sigurnosna kopija (izvoz i uvoz JSON fajla)
 - [x] Avansna i storno faktura
-- [ ] Prilagođen izgled fakture (logo, boje, raspored)
+- [ ] Prilagođen izgled fakture: logo, boje, font i raspored blokova prevlačenjem (drag & drop), uz gotove predloške
 - [ ] Ponavljajuće fakture
 - [ ] Izvještaji i KIF u Excelu
 - [ ] Opcionalna sinhronizacija između uređaja

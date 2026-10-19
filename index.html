@@ -227,7 +227,8 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
 .confirmbox .row{margin-top:8px}
 
 /* print: only the invoice paper, A4 */
-@page{size:A4; margin:14mm 14mm 16mm}
+/* margins live inside .paper so the result doesn't depend on the browser's or printer's margin setting */
+@page{size:A4; margin:0}
 @media print{
   :root{color-scheme:light}
   body{background:#fff!important}
@@ -235,7 +236,8 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
   main{padding:0!important; max-width:none!important}
   .wrap{padding:0!important}
   .editor{display:block!important}
-  .paper{box-shadow:none!important; padding:0!important; border-radius:0}
+  html, body{width:auto!important; margin:0!important}
+  .paper{box-shadow:none!important; padding:14mm 16mm 16mm!important; border-radius:0; max-width:100%; overflow:hidden; -webkit-box-decoration-break:clone; box-decoration-break:clone}
   .paper::after{display:none!important}
   .tablebox{overflow:visible; margin:0; padding:0}
   table.lines{min-width:0}
