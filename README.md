@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/kvit-logo-dark.svg">
+  <img src="assets/kvit-logo.svg" alt="Kvit" width="240">
+</picture>
+
 # Kvit
 
 **Besplatne fakture, predračuni i ponude za firme i obrte u Bosni i Hercegovini.**

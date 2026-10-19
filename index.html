@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Kvit: besplatan program za fakture, predračune i ponude za firme u BiH. Podaci ostaju u vašem pregledniku.">
 <title>Kvit fakture</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20150%20150%22%3E%3Cg%20transform=%22translate%2810%2010%29%20rotate%28-6%2065%2065%29%22%3E%3Crect%20x=%225%22%20y=%225%22%20width=%22120%22%20height=%22120%22%20rx=%2226%22%20fill=%22%233b41c4%22/%3E%3Cg%20fill=%22%23fff%22%3E%3Crect%20x=%2238%22%20y=%2233%22%20width=%2217%22%20height=%2264%22/%3E%3Cpolygon%20points=%2251%2C67%2079%2C33%2099%2C33%2051%2C91%22/%3E%3Cpolygon%20points=%2264%2C58%2076%2C46%20101%2C97%2080%2C97%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="assets/kvit-ikona-180.png">
+<meta name="theme-color" content="#3b41c4">
 <style>
 html{-webkit-text-size-adjust:100%}
 body{margin:0}
@@ -46,7 +49,7 @@ button{cursor:pointer}
 .topin{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding-block:12px}
 .brand{display:flex; align-items:baseline; gap:10px; font-family:var(--f-display); font-weight:700; font-size:22px; letter-spacing:-.01em}
 .brand small{font-family:var(--f-body); font-weight:400; font-size:13px; color:var(--muted); letter-spacing:0}
-.mark{display:inline-grid; place-items:center; width:30px; height:30px; border-radius:8px; background:var(--accent); color:var(--on-accent); font-size:17px; transform:rotate(-6deg); align-self:center}
+.mark{display:block; width:34px; height:34px; align-self:center; flex:none}
 .tabs{display:flex; gap:4px; background:var(--surface-2); padding:4px; border-radius:10px}
 .tabs button{border:0; background:transparent; padding:7px 14px; border-radius:7px; color:var(--muted); font-weight:500}
 .tabs button.on{background:var(--surface); color:var(--fg); box-shadow:0 1px 2px rgba(0,0,0,.08)}
@@ -301,7 +304,7 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
 <body>
 <header class="top">
   <div class="wrap topin">
-    <div class="brand"><span class="mark">K</span>Kvit <small>fakture bez pretplate</small></div>
+    <div class="brand"><svg class="mark" viewBox="0 0 150 150" role="img" aria-label="Kvit logo"><g transform="translate(10 10) rotate(-6 65 65)"><rect x="5" y="5" width="120" height="120" rx="26" fill="#3b41c4"/><g fill="#fff"><rect x="38" y="33" width="17" height="64"/><polygon points="51,67 79,33 99,33 51,91"/><polygon points="64,58 76,46 101,97 80,97"/></g></g></svg>Kvit <small>fakture bez pretplate</small></div>
     <nav class="tabs" aria-label="Glavni meni">
       <button data-tab="editor" class="on">Nova faktura</button>
       <button data-tab="archive">Arhiva <span class="count" id="archCount"></span></button>
@@ -533,7 +536,13 @@ const iso = d => d.toISOString().slice(0, 10);
 const today = () => iso(new Date());
 const addDays = (s, n) => { const d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + n); return iso(d); };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const parseNum = v => { let s = String(v ?? '').trim().replace(/\s/g, ''); if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.'); const n = parseFloat(s); return isNaN(n) ? NaN : n; };
+// accepts 1234.5, 1234,5, 1.234,56, 2.222.222 and 1.200 (dots as thousands separators, as written in BiH)
+const parseNum = v => {
+  let s = String(v ?? '').trim().replace(/[\s']/g, '');
+  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  else if ((s.match(/\./g) || []).length > 1 || /^-?[1-9]\d{0,2}\.\d{3}$/.test(s)) s = s.replace(/\./g, '');
+  const n = parseFloat(s); return isNaN(n) ? NaN : n;
+};
 const r2 = n => Math.round(n * 100) / 100;
 function fmt(n){ const s = r2(n).toFixed(2); let [i, d] = s.split('.'); const neg = i[0] === '-'; if (neg) i = i.slice(1); i = i.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); return (neg ? '-' : '') + i + ',' + d; }
 const numStr = n => String(r2(n)).replace('.', ',');

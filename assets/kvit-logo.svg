@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 160" width="420" height="160">
+  <!-- mark: tilted ink-stamp square with a K -->
+  <g transform="translate(10 15) rotate(-6 65 65)">
+    <rect x="5" y="5" width="120" height="120" rx="26" fill="#3b41c4"/>
+    <g fill="#ffffff">
+      <rect x="38" y="33" width="17" height="64"/>
+      <polygon points="51,67 79,33 99,33 51,91"/>
+      <polygon points="64,58 76,46 101,97 80,97"/>
+    </g>
+  </g>
+  <!-- wordmark: Kvit, straight-stroke letters, baseline y=130 -->
+  <g fill="#1b1f2e" transform="translate(168 30)">
+    <rect x="0" y="0" width="18" height="100"/>
+    <polygon points="14,53 56,0 80,0 14,81"/>
+    <polygon points="31,52 45,38 84,100 60,100"/>
+    <polygon points="90,36 109,36 126,80 143,36 162,36 136,100 116,100"/>
+    <rect x="172" y="36" width="18" height="64"/>
+    <rect x="172" y="4" width="18" height="18" rx="3"/>
+    <rect x="206" y="10" width="18" height="90"/>
+    <rect x="198" y="36" width="42" height="15"/>
+  </g>
+</svg>
