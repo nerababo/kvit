@@ -207,6 +207,41 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
   .cform .wide{grid-column:span 1}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important; animation:none!important} }
+
+/* backup panel */
+.pdate{display:none; font-family:var(--f-mono); font-size:13px}
+.backup{margin-top:20px}
+.backup .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px}
+.backup .last{font-size:13px; color:var(--muted)}
+.backup .last.stale{color:var(--warn)}
+.confirmbox{margin-top:12px; padding:12px 14px; border:1px solid var(--bad); background:var(--bad-bg); color:var(--fg); border-radius:10px; font-size:13.5px}
+.confirmbox .row{margin-top:8px}
+
+/* print: only the invoice paper, A4 */
+@page{size:A4; margin:14mm 14mm 16mm}
+@media print{
+  :root{color-scheme:light}
+  body{background:#fff!important}
+  .top, .palette, .toolbar, #tab-archive, #tab-company, .toast, .emptylines{display:none!important}
+  main{padding:0!important; max-width:none!important}
+  .wrap{padding:0!important}
+  .editor{display:block!important}
+  .paper{box-shadow:none!important; padding:0!important; border-radius:0}
+  .paper::after{display:none!important}
+  .tablebox{overflow:visible; margin:0; padding:0}
+  table.lines{min-width:0}
+  .lines tr{break-inside:avoid}
+  .h{width:28px}
+  .h .dots, .c-x, .lines td:last-child{display:none}
+  .in{border-color:transparent!important; padding:3px 0}
+  .dates input{display:none!important}
+  .pdate{display:inline}
+  .paper{background:#fff!important}
+  .buyer{border:0!important; padding:0; background:transparent!important; min-height:0}
+  .p-foot textarea{border:0; resize:none; padding:0; overflow:hidden}
+  .p-foot textarea:placeholder-shown{display:none}
+  .sum, .p-foot{break-inside:avoid}
+}
 </style>
 </head>
 <body>
@@ -267,6 +302,7 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
         </div>
         <div class="lft">
           <button class="btn" id="newBtn">Nova</button>
+          <button class="btn" id="pdfBtn" title="Otvara dijalog za štampu. Odaberite „Sačuvaj kao PDF“.">PDF / Štampa</button>
           <button class="btn primary" id="saveBtn">Sačuvaj u arhivu</button>
         </div>
       </div>
@@ -278,8 +314,8 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
             <p class="kind" id="kind">Faktura</p>
             <p class="no">br. <span id="docNo"></span></p>
             <div class="dates">
-              <label for="dDate">Datum izdavanja</label><input type="date" id="dDate">
-              <label for="dDue">Rok plaćanja</label><input type="date" id="dDue">
+              <label for="dDate">Datum izdavanja</label><span><input type="date" id="dDate"><span class="pdate" id="dDateP"></span></span>
+              <label for="dDue">Rok plaćanja</label><span><input type="date" id="dDue"><span class="pdate" id="dDueP"></span></span>
             </div>
           </div>
         </header>
@@ -340,6 +376,24 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
         <label>E-mail<input class="field" id="coEmail"></label>
         <label class="wide chk"><input type="checkbox" id="coInPdv"> Firma je u sistemu PDV-a</label>
       </form>
+    </div>
+
+    <div class="panel backup">
+      <h2>Sigurnosna kopija</h2>
+      <p class="sub">Vaši podaci postoje samo u ovom pregledniku. Preuzmite kopiju redovno i čuvajte je na sigurnom mjestu. Kopijom možete prenijeti podatke i na drugi računar.</p>
+      <div class="row">
+        <button class="btn primary" id="backupBtn">Preuzmi kopiju</button>
+        <label class="btn" for="restoreFile">Vrati iz kopije</label>
+        <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+        <span class="last" id="lastBackup"></span>
+      </div>
+      <div class="confirmbox" id="restoreConfirm" hidden>
+        <span id="restoreMsg"></span>
+        <div class="row">
+          <button class="btn danger" id="restoreYes">Zamijeni sve podatke</button>
+          <button class="btn" id="restoreNo">Odustani</button>
+        </div>
+      </div>
     </div>
   </section>
 </main>
@@ -446,8 +500,8 @@ function renderHeader(){
   $('#kind').textContent = d.type;
   $('#docType').value = d.type;
   $('#docNo').textContent = d.number;
-  $('#dDate').value = d.date; $('#dDue').value = d.due;
-  $('#dDue').previousElementSibling.textContent = d.type === 'Ponuda' ? 'Ponuda važi do' : 'Rok plaćanja';
+  $('#dDate').value = d.date; $('#dDue').value = d.due; $('#dDateP').textContent = bsDate(d.date); $('#dDueP').textContent = bsDate(d.due);
+  document.querySelector('label[for="dDue"]').textContent = d.type === 'Ponuda' ? 'Ponuda važi do' : 'Rok plaćanja';
   $('#note').value = d.note || '';
   $('#bankLine').innerHTML = c.bank ? `Uplatu izvršiti na račun <b>${esc(c.bank)}</b>, s pozivom na broj ${esc(d.number)}.` : '';
   $('#pdvNote').textContent = c.inPdv ? '' : 'Obveznik nije u sistemu PDV-a.';
@@ -585,8 +639,8 @@ $('#lineBody').addEventListener('click', e => {
 
 // header fields
 $('#docType').addEventListener('change', e => { S.draft.type = e.target.value; save(); renderHeader(); });
-$('#dDate').addEventListener('change', e => { S.draft.date = e.target.value; save(); });
-$('#dDue').addEventListener('change', e => { S.draft.due = e.target.value; save(); });
+$('#dDate').addEventListener('change', e => { S.draft.date = e.target.value; $('#dDateP').textContent = bsDate(e.target.value); save(); });
+$('#dDue').addEventListener('change', e => { S.draft.due = e.target.value; $('#dDueP').textContent = bsDate(e.target.value); save(); });
 $('#note').addEventListener('input', e => { S.draft.note = e.target.value; save(); });
 
 // save / new
@@ -600,6 +654,60 @@ $('#saveBtn').addEventListener('click', () => {
   else { rec.id = uid(); S.invoices.push(rec); S.seq++; }
   toast(`${d.type} ${d.number} je sačuvana`);
   S.draft = blankDraft(S); save(); renderEditor(); renderArchive();
+  const days = S.lastBackup ? (Date.now() - new Date(S.lastBackup).getTime()) / 864e5 : Infinity;
+  if (S.invoices.length >= 3 && days > 7) setTimeout(() => toast('Savjet: preuzmite sigurnosnu kopiju u kartici „Moja firma“'), 2400);
+});
+
+// PDF via the browser's print dialog ("Sačuvaj kao PDF")
+$('#pdfBtn').addEventListener('click', () => {
+  if (!S.draft.lines.length) { toast('Dodajte bar jednu stavku'); return; }
+  const prev = document.title;
+  document.title = `${S.draft.type} ${S.draft.number.replace('/', '-')}${S.draft.client ? ' ' + S.draft.client.name : ''}`;
+  window.print();
+  setTimeout(() => { document.title = prev; }, 500);
+});
+
+// backup: export / restore
+function renderBackup(){
+  const el = $('#lastBackup');
+  if (!S.lastBackup) { el.textContent = 'Kopija još nije napravljena'; el.className = 'last stale'; return; }
+  const days = Math.floor((Date.now() - new Date(S.lastBackup).getTime()) / 864e5);
+  el.textContent = 'Zadnja kopija: ' + bsDate(S.lastBackup.slice(0, 10)) + (days > 7 ? ` (prije ${days} dana)` : '');
+  el.className = 'last' + (days > 7 ? ' stale' : '');
+}
+$('#backupBtn').addEventListener('click', () => {
+  S.lastBackup = new Date().toISOString(); save();
+  const data = JSON.stringify({app: 'kvit', version: 1, exported: S.lastBackup, data: S}, null, 2);
+  const url = URL.createObjectURL(new Blob([data], {type: 'application/json'}));
+  const a = document.createElement('a');
+  a.href = url; a.download = `kvit-kopija-${today()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  renderBackup(); toast('Kopija preuzeta');
+});
+let pendingRestore = null;
+$('#restoreFile').addEventListener('change', e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const j = JSON.parse(String(rd.result));
+      const d = j && j.app === 'kvit' ? j.data : null;
+      if (!d || !d.company || !Array.isArray(d.invoices) || !Array.isArray(d.clients) || !Array.isArray(d.products)) throw 0;
+      pendingRestore = d;
+      $('#restoreMsg').textContent = `Kopija od ${bsDate((j.exported || '').slice(0, 10))}: ${d.invoices.length} dokumenata, ${d.clients.length} klijenata, ${d.products.length} proizvoda. Trenutni podaci u ovom pregledniku biće zamijenjeni.`;
+      $('#restoreConfirm').hidden = false;
+    } catch(_) { toast('Ovo nije ispravna Kvit kopija'); }
+  };
+  rd.readAsText(f);
+});
+$('#restoreNo').addEventListener('click', () => { pendingRestore = null; $('#restoreConfirm').hidden = true; });
+$('#restoreYes').addEventListener('click', () => {
+  if (!pendingRestore) return;
+  S = pendingRestore; if (!S.draft) S.draft = blankDraft(S); pendingRestore = null;
+  $('#restoreConfirm').hidden = true; save();
+  renderPalette(); renderCompany(); renderEditor(); renderArchive(); renderBackup();
+  toast('Podaci vraćeni iz kopije');
 });
 $('#newBtn').addEventListener('click', () => { S.draft = blankDraft(S); save(); renderEditor(); toast('Prazna faktura spremna'); });
 
@@ -718,7 +826,7 @@ function parseCSV(text){
   return out;
 }
 
-renderPalette(); renderCompany(); renderEditor(); renderArchive();
+renderPalette(); renderCompany(); renderEditor(); renderArchive(); renderBackup();
 })();
 </script>
 </body>

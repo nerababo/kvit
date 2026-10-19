@@ -14,6 +14,8 @@ Kvit je jedan HTML fajl. Nema servera, nema registracije, nema pretplate. Svi po
 - Iznos slovima („dvije hiljade … KM i 50/100“)
 - Podrška za firme izvan sistema PDV-a
 - Arhiva s pregledom: fakturisano, naplaćeno, otvoreno, kasni
+- **PDF:** dugme „PDF / Štampa“ pravi čistu A4 fakturu (u dijalogu odaberite „Sačuvaj kao PDF“)
+- **Sigurnosna kopija:** preuzmite sve podatke kao jedan fajl i vratite ih na bilo kojem računaru (kartica „Moja firma“)
 - Radi na računaru i mobitelu (na mobitelu se stavke dodaju dugmetom +)
 
 ## Pokretanje
@@ -41,14 +43,14 @@ PDV kolona nije obavezna (zadano 17%). Red zaglavlja se automatski preskače. Pr
 
 ## Važne napomene
 
-- **Podaci su samo u pregledniku.** Ako se obrišu podaci preglednika, brišu se i fakture. Izvoz i uvoz sigurnosne kopije je na planu razvoja.
+- **Podaci su samo u pregledniku.** Ako se obrišu podaci preglednika, brišu se i fakture. Redovno preuzimajte sigurnosnu kopiju u kartici „Moja firma“.
 - **Fiskalizacija i e-faktura:** Kvit trenutno nije povezan s fiskalnim sistemom. Novi Zakon o fiskalizaciji u FBiH uvodi obaveznu e-fakturu preko platforme Porezne uprave. Provjerite s računovođom šta važi za vašu djelatnost.
 - Kvit nije pravni ni računovodstveni savjet.
 
 ## Plan razvoja
 
-- [ ] Izvoz u PDF
-- [ ] Sigurnosna kopija (izvoz i uvoz JSON fajla)
+- [x] Izvoz u PDF
+- [x] Sigurnosna kopija (izvoz i uvoz JSON fajla)
 - [ ] Avansna i storno faktura
 - [ ] Ponavljajuće fakture
 - [ ] Izvještaji i KIF u Excelu
