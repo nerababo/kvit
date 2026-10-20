@@ -29,6 +29,8 @@ Kvit je jedan HTML fajl. Nema servera, nema registracije, nema pretplate. Svi po
 - **Ponavljajuće fakture:** mjesečno, kvartalno, polugodišnje ili godišnje. Kad dođe datum, faktura čeka pri otvaranju Kvita i izdaje se jednim klikom, s obračunskim periodom na fakturi. U nazivu stavke radi `{mjesec}` i `{godina}`
 - **Izvještaji:** promet po mjesecima, PDV po stopama, najbolji kupci i dugovanja po kašnjenju (1–30, 31–60, 61–90, preko 90 dana)
 - **Excel (.xlsx):** knjiga izlaznih faktura (KIF), promet, PDV, kupci i dugovanja, s pravim datumima i formatom brojeva
+- **Ulazne fakture (KUF):** unos faktura dobavljača s automatskim PDV-om, odbitni i neodbitni PDV, PDV za uplatu u izvještajima, list KUF u Excelu
+- **e-KIF i e-KUF za UIO (.csv):** datoteke e-Isporuke i e-Nabavke za jedan mjesec, po tehničkom uputstvu UIO
 - **e-KIF za UIO (.csv):** datoteka e-Isporuke za jedan mjesec, po tehničkom uputstvu UIO (zaglavlje, slogovi isporuka, zbirni slog)
 - **PDF:** dugme „PDF / Štampa“ pravi čistu A4 fakturu (u dijalogu odaberite „Sačuvaj kao PDF“)
 - **Sigurnosna kopija:** preuzmite sve podatke kao jedan fajl i vratite ih na bilo kojem računaru (kartica „Moja firma“)
@@ -78,7 +80,7 @@ PDV kolona nije obavezna (zadano 17%). Red zaglavlja se automatski preskače. Pr
 - [x] Ponavljajuće fakture
 - [x] Izvještaji i KIF u Excelu
 - [x] e-KIF datoteka za UIO
-- [ ] e-KUF (ulazne fakture)
+- [x] e-KUF (ulazne fakture)
 - [ ] Opcionalna sinhronizacija između uređaja
 - [ ] Integracija e-fakture (FBiH)
 

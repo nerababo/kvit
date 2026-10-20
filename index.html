@@ -356,6 +356,17 @@ body.layout-mode .lookpanel{display:flex}
 .duebar{display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; justify-content:space-between; padding:10px 12px 10px 14px; border-radius:10px; background:var(--warn-bg); color:var(--warn); font-weight:500}
 .dueacts{display:flex; gap:6px; flex-wrap:wrap}
 .recpanel{margin-top:20px}
+.tl-short{display:none}
+.kufform{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px; margin:16px 0 18px; padding:16px; border:1px solid var(--line); border-radius:12px; background:var(--bg)}
+.kufform.editing{border-color:var(--accent); background:var(--accent-soft)}
+.kufform label{display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); min-width:0}
+.kufform .field{color:var(--fg); background:var(--surface); min-width:0}
+.kufform .num{text-align:right; font-family:var(--f-mono); font-variant-numeric:tabular-nums}
+.kufform .kout{display:block; background:transparent; border-style:dashed}
+.kufform .w2{grid-column:span 2} .kufform .w3{grid-column:span 3} .kufform .w4{grid-column:1 / -1}
+.kufbar{display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; justify-content:space-between; margin-bottom:8px}
+@media (max-width: 880px){ .kufform{grid-template-columns:repeat(2, minmax(0,1fr))} .kufform .w3{grid-column:span 2} }
+@media (max-width: 480px){ .kufform{grid-template-columns:minmax(0,1fr)} .kufform .w2, .kufform .w3{grid-column:auto} }
 .emptyline{display:none; margin:2px 0 0; color:var(--muted); font-size:13.5px}
 #recPanel.is-empty .emptyline{display:block}
 #recPanel.is-empty > .sub, #recPanel.is-empty .rectable{display:none}
@@ -412,12 +423,13 @@ body.layout-mode .lookpanel{display:flex}
 @media (max-width: 720px){
   .topin{flex-wrap:nowrap; padding-block:10px}
   .brand small{display:none}
-  .tabs{position:fixed; left:0; right:0; bottom:0; z-index:50; display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:2px; border-radius:0; background:var(--surface); border-top:1px solid var(--line); padding:6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); box-shadow:0 -6px 20px -12px rgba(0,0,0,.25)}
+  .tabs{position:fixed; left:0; right:0; bottom:0; z-index:50; display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:2px; border-radius:0; background:var(--surface); border-top:1px solid var(--line); padding:6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); box-shadow:0 -6px 20px -12px rgba(0,0,0,.25)}
   .tabs button{flex-direction:column; gap:3px; padding:6px 2px; font-size:11.5px; color:var(--muted); white-space:nowrap}
   .tabs button:hover{color:var(--fg)}
   .tabs button .ic{display:block; width:22px; height:22px}
   .tabs button.on{background:var(--accent-soft); color:var(--accent); box-shadow:none}
   .tabs .count{display:none}
+  .tl-full{display:none} .tl-short{display:inline}
   body{padding-bottom:calc(66px + env(safe-area-inset-bottom, 0px))}
   .toast{bottom:calc(78px + env(safe-area-inset-bottom, 0px))}
 }
@@ -452,7 +464,7 @@ body.layout-mode .lookpanel{display:flex}
 @media print{
   :root{color-scheme:light}
   body{background:#fff!important}
-  .top, .palette, .toolbar, .editing, .backdrop, .duebar, .tour, #tab-archive, #tab-reports, #tab-company, .toast, .emptylines{display:none!important}
+  .top, .palette, .toolbar, .editing, .backdrop, .duebar, .tour, #tab-archive, #tab-reports, #tab-purchases, #tab-company, .toast, .emptylines{display:none!important}
   main{padding:0!important; max-width:none!important}
   .wrap{padding:0!important}
   .editor{display:block!important}
@@ -496,6 +508,7 @@ body.layout-mode .lookpanel{display:flex}
       <button data-tab="editor" class="on"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>Nova faktura</button>
       <button data-tab="archive"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg><span>Arhiva <span class="count" id="archCount"></span></span></button>
       <button data-tab="reports"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M2 20h20"/></svg>Izvještaji</button>
+      <button data-tab="purchases"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></svg><span class="tl-full">Ulazne fakture</span><span class="tl-short">Ulazne</span></button>
       <button data-tab="company"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M8 7h4M8 11h4M8 15h4M2 21h20"/></svg>Moja firma</button>
     </nav>
     <a class="helpbtn themebtn" id="wikiLink" href="https://github.com/nerababo/kvit/wiki" target="_blank" rel="noopener" title="Uputstvo za Kvit (wiki)" aria-label="Uputstvo za Kvit, otvara se u novoj kartici"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg></a>
@@ -728,6 +741,7 @@ body.layout-mode .lookpanel{display:flex}
       <div class="exports">
         <button class="btn primary" id="xlsxBtn">Preuzmi Excel (.xlsx)</button>
         <button class="btn" id="ekifBtn">Preuzmi e-KIF za UIO (.csv)</button>
+        <button class="btn" id="ekufBtn">Preuzmi e-KUF za UIO (.csv)</button>
         <p class="hint" id="ekifNote"></p>
       </div>
       <div class="figs" id="repFigs"></div>
@@ -737,6 +751,38 @@ body.layout-mode .lookpanel{display:flex}
         <section class="repcard"><h3>Najbolji kupci</h3><div class="scrollx"><table class="arch compact" id="repBuyers"></table></div></section>
         <section class="repcard"><h3>Dugovanja kupaca na današnji dan</h3><div class="scrollx"><table class="arch compact" id="repAging"></table></div></section>
       </div>
+    </div>
+  </section>
+
+  <section id="tab-purchases" hidden>
+    <div class="panel">
+      <h2>Ulazne fakture</h2>
+      <p class="sub">Fakture dobavljača za knjigu ulaznih faktura (KUF), ulazni PDV i e-KUF. Period knjiženja je datum prijema.</p>
+      <form class="kufform" id="kufForm" autocomplete="off">
+        <label class="w2">Dobavljač *<input class="field" id="kSup" list="kSupList" required></label>
+        <datalist id="kSupList"></datalist>
+        <label class="w2">Sjedište dobavljača<input class="field" id="kAddr"></label>
+        <label>PDV broj<input class="field" id="kPdv" inputmode="numeric" placeholder="12 cifara"></label>
+        <label>JIB<input class="field" id="kJib" inputmode="numeric" placeholder="13 cifara"></label>
+        <label class="w2">Vrsta dokumenta
+          <select class="field" id="kType"><option value="01">01 Faktura za robu i usluge iz zemlje</option><option value="02">02 Faktura za vlastitu potrošnju</option><option value="03">03 Avansna faktura (dati avans)</option><option value="04">04 JCI (uvoz)</option><option value="05">05 Ostalo (npr. usluge iz inostranstva)</option></select>
+        </label>
+        <label>Broj fakture *<input class="field" id="kNo" required></label>
+        <label>Datum fakture *<input class="field" type="date" id="kDate" required></label>
+        <label>Datum prijema *<input class="field" type="date" id="kRecv" required></label>
+        <label>Iznos bez PDV-a *<input class="field num" id="kBase" inputmode="decimal" required></label>
+        <label>PDV<input class="field num" id="kVat" inputmode="decimal"></label>
+        <label>Ukupno sa PDV-om<output class="field num kout" id="kTotal">0,00</output></label>
+        <label>PDV koji se može odbiti<input class="field num" id="kDed" inputmode="decimal"></label>
+        <label class="w3">Napomena<input class="field" id="kNote"></label>
+        <p class="hint w4" id="kHint">PDV se računa sam (17%) dok ga ne promijenite. Ako nemate pravo na odbitak (npr. reprezentacija), upišite 0 ili umanjen iznos u „PDV koji se može odbiti“.</p>
+        <div class="recbtns w4"><button class="btn primary" id="kSave">Dodaj u KUF</button><button type="button" class="btn" id="kCancel" hidden>Odustani</button></div>
+      </form>
+      <div class="kufbar">
+        <div class="chips" role="group" aria-label="Period"><button class="chip" data-kp="month">Ovaj mjesec</button><button class="chip" data-kp="prev">Prošli mjesec</button><button class="chip" data-kp="all">Sve</button></div>
+        <span class="sub" id="kufCount"></span>
+      </div>
+      <div class="scrollx"><table class="arch" id="kufTable"></table></div>
     </div>
   </section>
 
@@ -871,6 +917,7 @@ let S;
 try { S = JSON.parse(localStorage.getItem(KEY)); } catch(e) { S = null; }
 if (!S || !S.draft) S = seed();
 S.recurring = S.recurring || [];
+S.purchases = S.purchases || [];
 let saveWarned = false;
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); saveWarned = false; } catch(e) { if (!saveWarned) { saveWarned = true; setTimeout(() => toast('Memorija preglednika je puna. Uklonite logo ili preuzmite kopiju i obrišite stare dokumente.'), 50); } } }
 
@@ -1062,8 +1109,9 @@ $('#coForm').addEventListener('input', () => {
 // tabs
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  ['editor', 'archive', 'reports', 'company'].forEach(t => $('#tab-' + t).hidden = t !== b.dataset.tab);
+  ['editor', 'archive', 'reports', 'purchases', 'company'].forEach(t => $('#tab-' + t).hidden = t !== b.dataset.tab);
   if (b.dataset.tab === 'reports') renderReports();
+  if (b.dataset.tab === 'purchases') renderKuf();
   if (b.dataset.tab === 'archive') { confirmDel = confirmStorno = confirmRec = null; renderArchive(); }
 }));
 
@@ -1210,7 +1258,7 @@ $('#restoreFile').addEventListener('change', e => {
 $('#restoreNo').addEventListener('click', () => { pendingRestore = null; $('#restoreConfirm').hidden = true; });
 $('#restoreYes').addEventListener('click', () => {
   if (!pendingRestore) return;
-  S = pendingRestore; if (!S.draft) S.draft = blankDraft(S); S.recurring = S.recurring || []; pendingRestore = null;
+  S = pendingRestore; if (!S.draft) S.draft = blankDraft(S); S.recurring = S.recurring || []; S.purchases = S.purchases || []; pendingRestore = null;
   $('#restoreConfirm').hidden = true; save();
   renderPalette(); renderCompany(); renderEditor(); renderArchive(); renderBackup();
   toast('Podaci vraćeni iz kopije');
@@ -1460,7 +1508,8 @@ function renderReports(){
     <div class="fig"><span>Fakturisano${inPdv ? ' sa PDV' : ''}</span><b>${fmt(t.total)}</b></div>
     ${inPdv ? `<div class="fig"><span>Osnovica</span><b>${fmt(t.base)}</b></div><div class="fig"><span>Izlazni PDV</span><b>${fmt(t.vat)}</b></div>` : ''}
     <div class="fig"><span>Naplaćeno</span><b>${fmt(t.paid)}</b></div>
-    <div class="fig late"><span>Otvoreno</span><b>${fmt(t.open)}</b></div>`;
+    <div class="fig late"><span>Otvoreno</span><b>${fmt(t.open)}</b></div>` + (inPdv ? (() => { const k = kufTotals(kufInPeriod(repFrom, repTo)), due = r2(t.vat - k.ded);
+      return `<div class="fig"><span>Odbitni ulazni PDV</span><b>${fmt(k.ded)}</b></div><div class="fig ${due < 0 ? '' : 'late'}"><span>${due < 0 ? 'PDV preplata' : 'PDV za uplatu'}</span><b>${fmt(Math.abs(due))}</b></div>`; })() : '');
   const none = cols => `<tr><td colspan="${cols}" class="empty">U ovom periodu nema izdanih faktura.</td></tr>`;
   const mk = Object.keys(sm.months);
   $('#repMonths').innerHTML = `<thead><tr><th>Mjesec</th><th class="r">Faktura</th><th class="r">${inPdv ? 'Sa PDV' : 'Iznos'}</th><th class="r">Naplaćeno</th><th class="r">Otvoreno</th></tr></thead><tbody>` +
@@ -1478,8 +1527,8 @@ function renderReports(){
   // e-KIF availability
   const pdv = String(S.company.pdv || '').replace(/\D/g, '');
   const why = !inPdv ? 'e-KIF predaju samo obveznici PDV-a.' : pdv.length !== 12 ? 'Za e-KIF unesite PDV broj firme (12 cifara) u kartici „Moja firma“.' : !isOneMonth() ? 'e-KIF se pravi za jedan kalendarski mjesec. Odaberite „Ovaj mjesec“ ili „Prošli mjesec“.' : '';
-  $('#ekifBtn').disabled = !!why;
-  $('#ekifNote').textContent = why || `Datoteka e-Isporuke za ${MONTH_LBL(repFrom.slice(0, 7))}, po tehničkom uputstvu UIO. Prije prve predaje neka je provjeri vaš računovođa.`;
+  $('#ekifBtn').disabled = $('#ekufBtn').disabled = !!why;
+  $('#ekifNote').textContent = why ? why.replace('e-KIF se pravi', 'e-KIF i e-KUF se prave').replace('Za e-KIF', 'Za e-KIF i e-KUF').replace('e-KIF predaju', 'e-KIF i e-KUF predaju') : `Datoteke e-Isporuke i e-Nabavke za ${MONTH_LBL(repFrom.slice(0, 7))}, po tehničkom uputstvu UIO. Prije prve predaje neka ih provjeri vaš računovođa.`;
 }
 document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => setPeriod(c.dataset.per)));
 ['#repFrom', '#repTo'].forEach(id => $(id).addEventListener('change', () => {
@@ -1579,6 +1628,11 @@ function buildReportXlsx(){
     sheets.push({name: 'PDV po stopama', freeze: 5, cols: [12, 16, 16],
       rows: [...top('PDV po stopama'), ['Stopa', 'Osnovica', 'PDV'].map(X.h), ...rk.map(r => [`${r}%`, X.m(sm.rates[r].base), X.m(sm.rates[r].tax)]), [X.b('Ukupno'), X.mb(sm.tot.base), X.mb(sm.tot.vat)]]});
   }
+  const kl = kufInPeriod(repFrom, repTo), kt = kufTotals(kl);
+  sheets.push({name: 'KUF', freeze: 5, cols: [8, 8, 16, 11, 11, 30, 30, 15, 15, 15, 15, 14, 14, 14, 30],
+    rows: [...top('Knjiga ulaznih faktura (KUF)'), ['Red. br.', 'Tip dok.', 'Broj fakture', 'Datum fakture', 'Datum prijema', 'Dobavljač', 'Sjedište dobavljača', 'PDV broj', 'JIB', 'Bez PDV-a', 'Sa PDV-om', 'Ulazni PDV', 'Odbitni PDV', 'Neodbitni PDV', 'Napomena'].map(X.h),
+      ...kl.map((x, n) => [X.i(n + 1), x.type, x.no, X.d(x.date), X.d(x.recv), x.sup.name, x.sup.addr || '', x.sup.pdv || '', x.sup.jib || '', X.m(x.base), X.m(x.base + x.vat), X.m(x.vat), X.m(x.ded), X.m(x.vat - x.ded), x.note || '']),
+      ...(kl.length ? [[X.b('Ukupno'), '', '', '', '', '', '', '', '', X.mb(kt.base), X.mb(kt.total), X.mb(kt.vat), X.mb(kt.ded), X.mb(kt.nded)]] : [['U ovom periodu nema ulaznih faktura.']])]});
   sheets.push({name: 'Kupci', freeze: 5, cols: [34, 10, 16],
     rows: [...top('Promet po kupcima'), ['Kupac', 'Faktura', 'Iznos'].map(X.h), ...sm.buyers.map(([n, b]) => [n, X.i(b.n), X.m(b.total)])]});
   const ag = aging();
@@ -1609,6 +1663,117 @@ function buildEkif(){
   out.push([3, ...sums.map(amt), docs.length].join(';'));
   return {name: `${pdv}_${per}_2_01.csv`, text: out.join('\r\n') + '\r\n', count: docs.length};
 }
+// ---------- incoming invoices (KUF) ----------
+const KUF_TYPE = {'01': 'Faktura', '02': 'Vlastita potrošnja', '03': 'Avans', '04': 'JCI uvoz', '05': 'Ostalo'};
+let kufEdit = null, kufPer = 'month', kufVatDirty = false, kufDedDirty = false, confirmKuf = null;
+const kufSorted = list => [...list].sort((a, b) => a.recv.localeCompare(b.recv) || a.date.localeCompare(b.date) || (a.created || 0) - (b.created || 0));
+function kufInPeriod(from, to){ return kufSorted(S.purchases.filter(x => x.recv >= from && x.recv <= to)); }
+function kufTotals(list){
+  const t = {base: 0, vat: 0, total: 0, ded: 0, nded: 0};
+  list.forEach(x => { t.base += x.base; t.vat += x.vat; t.total += x.base + x.vat; t.ded += x.ded; t.nded += x.vat - x.ded; });
+  Object.keys(t).forEach(k => t[k] = r2(t[k])); return t;
+}
+function kufRange(){
+  const t = today(), y = +t.slice(0, 4), m = +t.slice(5, 7);
+  if (kufPer === 'all') return ['0000-01-01', '9999-12-31'];
+  const [yy, mm] = kufPer === 'prev' ? (m === 1 ? [y - 1, 12] : [y, m - 1]) : [y, m];
+  return [`${yy}-${p2(mm)}-01`, `${yy}-${p2(mm)}-${p2(new Date(yy, mm, 0).getDate())}`];
+}
+function kufCalc(){
+  const base = parseNum($('#kBase').value) || 0;
+  if (!kufVatDirty) $('#kVat').value = $('#kBase').value.trim() ? fmt(S.company.inPdv && $('#kType').value !== '04' ? base * .17 : 0) : '';
+  const vat = parseNum($('#kVat').value) || 0;
+  if (!kufDedDirty) $('#kDed').value = $('#kVat').value.trim() ? fmt(S.company.inPdv ? vat : 0) : '';
+  $('#kTotal').textContent = fmt(base + vat);
+}
+function kufReset(){
+  kufEdit = null; kufVatDirty = kufDedDirty = false; $('#kufForm').reset(); $('#kufForm').classList.remove('editing');
+  $('#kDate').value = $('#kRecv').value = today(); $('#kTotal').textContent = '0,00';
+  $('#kSave').textContent = 'Dodaj u KUF'; $('#kCancel').hidden = true;
+}
+function renderKuf(){
+  const names = [...new Set(S.purchases.map(x => x.sup.name))].sort((a, b) => a.localeCompare(b));
+  $('#kSupList').innerHTML = names.map(n => `<option value="${esc(n)}"></option>`).join('');
+  document.querySelectorAll('[data-kp]').forEach(c => c.classList.toggle('on', c.dataset.kp === kufPer));
+  if (!$('#kDate').value) { $('#kDate').value = $('#kRecv').value = today(); }
+  $('#kHint').hidden = false;
+  const [from, to] = kufRange(), list = kufInPeriod(from, to), t = kufTotals(list);
+  $('#kufCount').textContent = `${list.length} ${form(list.length, 'faktura', 'fakture', 'faktura')}${kufPer === 'all' ? '' : ' u periodu'}`;
+  $('#kufTable').innerHTML = `<thead><tr><th class="r">Rb.</th><th>Dobavljač</th><th>Br. fakture</th><th>Datum</th><th>Prijem</th><th class="r">Bez PDV-a</th><th class="r">PDV</th><th class="r">Ukupno</th><th class="r">Odbitni PDV</th><th><span hidden>Akcije</span></th></tr></thead><tbody>` +
+    (list.length ? list.map((x, n) => `<tr><td class="num">${n + 1}</td><td>${esc(x.sup.name)}${x.type !== '01' ? `<span class="reftxt">${KUF_TYPE[x.type]}</span>` : ''}</td><td class="mono">${esc(x.no)}</td><td class="mono">${bsDate(x.date)}</td><td class="mono">${bsDate(x.recv)}</td>
+      <td class="num">${fmt(x.base)}</td><td class="num">${fmt(x.vat)}</td><td class="num">${fmt(x.base + x.vat)}</td><td class="num">${fmt(x.ded)}</td>
+      <td><div class="acts"><button class="btn small" data-kedit="${x.id}">Uredi</button><button class="btn small${confirmKuf === x.id ? ' danger' : ''}" data-kdel="${x.id}">${confirmKuf === x.id ? 'Potvrdi' : 'Obriši'}</button></div></td></tr>`).join('') +
+      `<tr class="tot"><td></td><td>Ukupno</td><td></td><td></td><td></td><td class="num">${fmt(t.base)}</td><td class="num">${fmt(t.vat)}</td><td class="num">${fmt(t.total)}</td><td class="num">${fmt(t.ded)}</td><td></td></tr>`
+    : `<tr><td colspan="10" class="empty">${kufPer === 'all' ? 'Još nema ulaznih faktura. Unesite prvu u obrazac iznad.' : 'U ovom periodu nema ulaznih faktura.'}</td></tr>`) + '</tbody>';
+}
+$('#kBase').addEventListener('input', kufCalc);
+$('#kType').addEventListener('change', kufCalc);
+$('#kVat').addEventListener('input', () => { kufVatDirty = true; kufCalc(); });
+$('#kDed').addEventListener('input', () => { kufDedDirty = true; });
+$('#kDate').addEventListener('change', e => { if (!kufEdit && (!$('#kRecv').value || $('#kRecv').value < e.target.value)) $('#kRecv').value = e.target.value; });
+$('#kSup').addEventListener('change', () => {   // known supplier: fill the rest
+  const prev = kufSorted(S.purchases).reverse().find(x => x.sup.name.toLowerCase() === $('#kSup').value.trim().toLowerCase());
+  if (prev) { if (!$('#kAddr').value) $('#kAddr').value = prev.sup.addr || ''; if (!$('#kPdv').value) $('#kPdv').value = prev.sup.pdv || ''; if (!$('#kJib').value) $('#kJib').value = prev.sup.jib || ''; if (!kufEdit) $('#kType').value = prev.type; }
+});
+$('#kufForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const base = parseNum($('#kBase').value), vat = $('#kVat').value.trim() ? parseNum($('#kVat').value) : 0, ded = $('#kDed').value.trim() ? parseNum($('#kDed').value) : 0;
+  if (isNaN(base)) { toast('Iznos bez PDV-a nije broj'); return; }
+  if (isNaN(vat) || isNaN(ded)) { toast('PDV mora biti broj'); return; }
+  if (ded > vat + 0.004) { toast('Odbitni PDV ne može biti veći od PDV-a na fakturi'); return; }
+  const pdv = $('#kPdv').value.replace(/\D/g, ''), jib = $('#kJib').value.replace(/\D/g, '');
+  if (pdv && pdv.length !== 12) { toast('PDV broj dobavljača ima 12 cifara'); return; }
+  if (jib && jib.length !== 13) { toast('JIB dobavljača ima 13 cifara'); return; }
+  const rec = {id: kufEdit || uid(), type: $('#kType').value, no: $('#kNo').value.trim(), date: $('#kDate').value, recv: $('#kRecv').value,
+    sup: {name: $('#kSup').value.trim(), addr: $('#kAddr').value.trim(), pdv, jib}, base: r2(base), vat: r2(vat), ded: r2(ded), note: $('#kNote').value.trim()};
+  if (rec.recv < rec.date) { toast('Datum prijema ne može biti prije datuma fakture'); return; }
+  const dup = S.purchases.find(x => x.id !== rec.id && x.no.toLowerCase() === rec.no.toLowerCase() && x.sup.name.toLowerCase() === rec.sup.name.toLowerCase());
+  if (dup) { toast(`Faktura ${rec.no} od ${rec.sup.name} je već unesena (${bsDate(dup.recv)})`); return; }
+  const i = S.purchases.findIndex(x => x.id === rec.id);
+  if (i >= 0) { rec.created = S.purchases[i].created; S.purchases[i] = rec; toast('Ulazna faktura je izmijenjena'); }
+  else { rec.created = Date.now(); S.purchases.push(rec); toast(`Dodano u KUF: ${rec.sup.name}, ${fmt(rec.base + rec.vat)} KM`); }
+  save(); kufReset(); renderKuf(); $('#kSup').focus();
+});
+$('#kCancel').addEventListener('click', () => { kufReset(); renderKuf(); });
+document.querySelectorAll('[data-kp]').forEach(c => c.addEventListener('click', () => { kufPer = c.dataset.kp; confirmKuf = null; renderKuf(); }));
+$('#kufTable').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.kedit) {
+    const x = S.purchases.find(y => y.id === b.dataset.kedit); if (!x) return;
+    kufEdit = x.id; kufVatDirty = kufDedDirty = true;
+    $('#kSup').value = x.sup.name; $('#kAddr').value = x.sup.addr; $('#kPdv').value = x.sup.pdv; $('#kJib').value = x.sup.jib; $('#kType').value = x.type;
+    $('#kNo').value = x.no; $('#kDate').value = x.date; $('#kRecv').value = x.recv; $('#kBase').value = fmt(x.base); $('#kVat').value = fmt(x.vat); $('#kDed').value = fmt(x.ded); $('#kNote').value = x.note || '';
+    $('#kTotal').textContent = fmt(x.base + x.vat); $('#kufForm').classList.add('editing'); $('#kSave').textContent = 'Sačuvaj izmjene'; $('#kCancel').hidden = false;
+    $('#kufForm').scrollIntoView({behavior: smooth(), block: 'start'});
+  }
+  if (b.dataset.kdel) {
+    if (confirmKuf !== b.dataset.kdel) { confirmKuf = b.dataset.kdel; renderKuf(); return; }
+    S.purchases = S.purchases.filter(x => x.id !== confirmKuf); confirmKuf = null; save(); renderKuf(); toast('Ulazna faktura je obrisana');
+  }
+});
+
+// e-KUF: UIO "e-Nabavke" file (header, one record per purchase, footer)
+function buildEkuf(){
+  const c = S.company, pdv = String(c.pdv || '').replace(/\D/g, ''), per = repFrom.slice(2, 4) + repFrom.slice(5, 7);
+  const clean = (v, n) => String(v || '').replace(/[;\r\n\t]+/g, ' ').trim().slice(0, n), amt = n => r2(n).toFixed(2);
+  const ent = {FBiH: 0, RS: 1, BD: 2}[c.ent || 'FBiH'] || 0, list = kufInPeriod(repFrom, repTo), sums = Array(9).fill(0);
+  const out = [[1, pdv, per, 1, '01', today(), new Date().toTimeString().slice(0, 8)].join(';')];
+  list.forEach((x, n) => {
+    const imp = x.type === '04', nd = r2(x.vat - x.ded);
+    const f = [x.base, x.base + x.vat, 0, x.vat, x.ded, nd, 0, 0, 0]; f[6 + ent] = nd;   // non-deductible VAT also goes to field 32/33/34
+    f.forEach((v, k) => sums[k] += v);
+    out.push([2, per, n + 1, x.type, clean(x.no, 100), x.date, x.recv, clean(x.sup.name, 100), clean(x.sup.addr, 100),
+      imp ? '000000000000' : (x.sup.pdv.length === 12 ? x.sup.pdv : ''), imp ? '0000000000000' : (!x.sup.pdv && x.sup.jib.length === 13 ? x.sup.jib : ''), ...f.map(amt)].join(';'));
+  });
+  out.push([3, ...sums.map(amt), list.length].join(';'));
+  return {name: `${pdv}_${per}_1_01.csv`, text: out.join('\r\n') + '\r\n', count: list.length};
+}
+$('#ekufBtn').addEventListener('click', () => {
+  const f = buildEkuf();
+  downloadBlob(new Blob([f.text], {type: 'text/csv;charset=utf-8'}), f.name);
+  toast(`e-KUF preuzet: ${f.count} ${form(f.count, 'dokument', 'dokumenta', 'dokumenata')}`);
+});
+
 $('#ekifBtn').addEventListener('click', () => {
   const f = buildEkif();
   downloadBlob(new Blob([f.text], {type: 'text/csv;charset=utf-8'}), f.name);
@@ -2119,7 +2284,7 @@ const TOUR = [
   {tab: 'editor', sel: '#buyer', title: 'Kupac', text: 'Klijenta iz lijeve liste prevucite u ovo polje ili kliknite „Odaberi“. Količinu, cijenu i rabat mijenjate direktno na fakturi.'},
   {tab: 'editor', sel: '#lookBtn', title: 'Izgled fakture', text: 'Dodajte logo, odaberite boju i slova ili premjestite blokove na fakturi. Važi za sve dokumente.'},
   {tab: 'editor', sel: '#pdfBtn, #saveBtn', title: 'PDF i arhiva', text: '„PDF / Štampa“ pravi PDF za slanje kupcu. „Sačuvaj u arhivu“ čuva dokument i dodjeljuje sljedeći broj.'},
-  {tab: 'editor', sel: '.tabs', title: 'Arhiva i izvještaji', text: 'U Arhivi označavate plaćene fakture, pravite storno, avansne i ponavljajuće fakture. U Izvještajima su promet, PDV, Excel i e-KIF.'},
+  {tab: 'editor', sel: '.tabs', title: 'Arhiva i izvještaji', text: 'U Arhivi označavate plaćene fakture, pravite storno, avansne i ponavljajuće fakture. U Ulaznim fakturama vodite KUF, a u Izvještajima su promet, PDV za uplatu, Excel, e-KIF i e-KUF.'},
   {tab: 'company', sel: '.backup', title: 'Sigurnosna kopija', text: 'Podaci postoje samo u ovom pregledniku. Redovno preuzmite kopiju i čuvajte je na sigurnom. Vodič ponovo pokrećete dugmetom „?“, a detaljno uputstvo je iza dugmeta s knjigom.'}
 ];
 let tourI = -1;
