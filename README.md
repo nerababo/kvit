@@ -10,6 +10,8 @@ Free, open source invoicing for small businesses in Bosnia and Herzegovina.
 
 Kvit je jedan HTML fajl. Nema servera, nema registracije, nema pretplate. Svi podaci (firma, klijenti, proizvodi, fakture) ostaju u pregledniku korisnika.
 
+**📖 Uputstvo za korištenje:** [wiki](https://github.com/nerababo/kvit/wiki) · **Otvori Kvit:** https://nerababo.github.io/kvit/
+
 ## Mogućnosti
 
 - **Drag & drop:** prevucite proizvod ili uslugu na fakturu, prevucite klijenta na polje „Kupac“, mijenjajte redoslijed stavki prevlačenjem, a stavku uklonite tako što je vratite u lijevi panel
@@ -17,7 +19,7 @@ Kvit je jedan HTML fajl. Nema servera, nema registracije, nema pretplate. Svi po
 - Faktura, predračun i ponuda; ponuda ili predračun jednim klikom postaju faktura
 - **Avansna faktura:** napravite je iz predračuna, a na konačnoj fakturi avans se odbija po stopama PDV-a
 - **Storno faktura:** pogrešna faktura se ne briše nego stornira, storno dobija sljedeći broj i vezu na original
-- Automatski broj dokumenta, PDV po stopama, rabat po stavci
+- Automatski broj dokumenta, koji svake godine počinje od 1 (može se isključiti u kartici „Moja firma“), PDV po stopama, rabat po stavci
 - **Izgled dokumenata:** dugme „Uredi izgled“ – logo, boja, slova, tri gotova predloška (Klasični, Logo u centru, Minimalni), blokovi (logo, firma, dokument, kupac) se premještaju prevlačenjem, položaj ukupnog iznosa i potpisa, uključivanje iznosa slovima i podnožja
 - **Kolone po izboru:** meni „Kolone“ sakriva redni broj, jedinicu mjere, količinu, cijenu, rabat ili PDV % na svim dokumentima. Kad je cijena skrivena, iznos stavke se upisuje direktno
 - Iznos slovima („dvije hiljade … KM i 50/100“)
