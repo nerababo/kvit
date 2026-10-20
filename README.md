@@ -29,6 +29,7 @@ Kvit je jedan HTML fajl. Nema servera, nema registracije, nema pretplate. Svi po
 - **e-KIF za UIO (.csv):** datoteka e-Isporuke za jedan mjesec, po tehničkom uputstvu UIO (zaglavlje, slogovi isporuka, zbirni slog)
 - **PDF:** dugme „PDF / Štampa“ pravi čistu A4 fakturu (u dijalogu odaberite „Sačuvaj kao PDF“)
 - **Sigurnosna kopija:** preuzmite sve podatke kao jedan fajl i vratite ih na bilo kojem računaru (kartica „Moja firma“)
+- **Vodič za nove korisnike:** kratak obilazak u 8 koraka pri prvom otvaranju; ponovo se pokreće dugmetom „?“ u zaglavlju
 - Radi na računaru i mobitelu (na mobitelu se stavke dodaju dugmetom +)
 
 ## Pokretanje
@@ -68,7 +69,7 @@ PDV kolona nije obavezna (zadano 17%). Red zaglavlja se automatski preskače. Pr
 - [x] Avansna i storno faktura
 - [x] Prilagođen izgled fakture: logo, boje, font i raspored blokova prevlačenjem (drag & drop), uz gotove predloške
 - [ ] Ideja: okvir „Podaci za uplatu“ pored ukupnog iznosa i pečat „PLAĆENO“ na plaćenim fakturama
-- [ ] Vodič za nove korisnike: kratki interaktivni tutorijal pri prvom pokretanju (unos firme, prva faktura, drag & drop, PDF, sigurnosna kopija)
+- [x] Vodič za nove korisnike: kratki interaktivni tutorijal pri prvom pokretanju (unos firme, prva faktura, drag & drop, PDF, sigurnosna kopija)
 - [x] Ponavljajuće fakture
 - [x] Izvještaji i KIF u Excelu
 - [x] e-KIF datoteka za UIO

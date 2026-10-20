@@ -268,6 +268,20 @@ td.amt{font-family:var(--p-num); font-size:13px; text-align:right; white-space:n
 .pill.storno{background:var(--surface-2); color:var(--muted)}
 .arch .reftxt{display:block; font-size:12px; color:var(--muted)}
 .btn.link{border-color:transparent; color:var(--accent); padding-inline:6px}
+.topr{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.helpbtn{width:34px; height:34px; flex:none; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--muted); font-family:var(--f-display); font-weight:700; font-size:16px; line-height:1}
+.helpbtn:hover{color:var(--accent); border-color:var(--accent)}
+.tour{position:fixed; inset:0; z-index:1000}
+.tour-spot{position:fixed; border-radius:10px; box-shadow:0 0 0 9999px rgba(10,12,28,.58); transition:top .25s, left .25s, width .25s, height .25s; pointer-events:none}
+.tour-spot::after{content:""; position:absolute; inset:-3px; border:2px solid var(--accent); border-radius:12px}
+.tour-spot.none::after{display:none}
+.tour-card{position:fixed; width:min(340px, calc(100vw - 24px)); display:flex; flex-direction:column; gap:6px; padding:16px 16px 12px; background:var(--surface); color:var(--fg); border:1px solid var(--line); border-radius:12px; box-shadow:0 18px 44px -12px rgba(0,0,0,.5)}
+.tour-card h3{margin:0; font-family:var(--f-display); font-size:18px; text-wrap:balance}
+.tour-card p{margin:0; color:var(--muted); line-height:1.5}
+.tour-step{font-family:var(--f-mono); font-size:12px; color:var(--accent); font-variant-numeric:tabular-nums}
+.tour-acts{display:flex; gap:6px; align-items:center; margin-top:8px}
+.tour-acts .sp{flex:1}
+@media (max-width: 640px){ .tour-card{left:12px!important; right:12px; top:auto!important; bottom:calc(12px + env(safe-area-inset-bottom, 0px)); width:auto} }
 .lookpanel{display:none; flex-direction:column; gap:16px}
 body.layout-mode .palette > :not(.lookpanel){display:none!important}
 body.layout-mode .lookpanel{display:flex}
@@ -351,7 +365,7 @@ body.layout-mode .lookpanel{display:flex}
 @media print{
   :root{color-scheme:light}
   body{background:#fff!important}
-  .top, .palette, .toolbar, .duebar, #tab-archive, #tab-reports, #tab-company, .toast, .emptylines{display:none!important}
+  .top, .palette, .toolbar, .duebar, .tour, #tab-archive, #tab-reports, #tab-company, .toast, .emptylines{display:none!important}
   main{padding:0!important; max-width:none!important}
   .wrap{padding:0!important}
   .editor{display:block!important}
@@ -389,12 +403,15 @@ body.layout-mode .lookpanel{display:flex}
 <header class="top">
   <div class="wrap topin">
     <div class="brand"><svg class="mark" viewBox="0 0 150 150" role="img" aria-label="Kvit logo"><g transform="translate(10 10) rotate(-6 65 65)"><rect x="5" y="5" width="120" height="120" rx="26" fill="#3b41c4"/><g fill="#fff"><rect x="38" y="33" width="17" height="64"/><polygon points="51,67 79,33 99,33 51,91"/><polygon points="64,58 76,46 101,97 80,97"/></g></g></svg>Kvit <small>fakture bez pretplate</small></div>
+    <div class="topr">
     <nav class="tabs" aria-label="Glavni meni">
       <button data-tab="editor" class="on">Nova faktura</button>
       <button data-tab="archive">Arhiva <span class="count" id="archCount"></span></button>
       <button data-tab="reports">Izvještaji</button>
       <button data-tab="company">Moja firma</button>
     </nav>
+    <button class="helpbtn" id="tourBtn" title="Vodič kroz Kvit" aria-label="Pokreni vodič kroz Kvit">?</button>
+    </div>
   </div>
 </header>
 
@@ -635,6 +652,15 @@ body.layout-mode .lookpanel{display:flex}
   </section>
 </main>
 <div class="toast" id="toast" role="status"></div>
+<div class="tour" id="tour" hidden>
+  <div class="tour-spot" id="tourSpot"></div>
+  <div class="tour-card" id="tourCard" role="dialog" aria-modal="true" aria-labelledby="tourTitle" aria-describedby="tourText">
+    <span class="tour-step" id="tourStep"></span>
+    <h3 id="tourTitle"></h3>
+    <p id="tourText"></p>
+    <div class="tour-acts"><button class="btn small link" id="tourSkip">Preskoči</button><span class="sp"></span><button class="btn small" id="tourBack">Nazad</button><button class="btn small primary" id="tourNext">Dalje</button></div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -1672,7 +1698,71 @@ function parseCSV(text){
   return out;
 }
 
+// ---------- first-run tour ----------
+const TOUR = [
+  {title: 'Dobro došli u Kvit', text: 'Fakture, predračuni i ponude, besplatno i bez pretplate. Za minut prolazimo kroz osnovno. Primjer podaci su tu da odmah možete probati.'},
+  {tab: 'company', sel: '#coForm', title: 'Podaci vaše firme', text: 'Unesite naziv, adresu, JIB i bankovni račun. Ovi podaci se pojavljuju na svakoj fakturi.'},
+  {tab: 'editor', sel: '#prodList', title: 'Stavke prevlačenjem', text: 'Prevucite proizvod ili uslugu na fakturu. Na mobitelu kliknite +. Nove proizvode dodajete ispod liste.'},
+  {tab: 'editor', sel: '#buyer', title: 'Kupac', text: 'Klijenta iz lijeve liste prevucite u ovo polje ili kliknite „Odaberi“. Količinu, cijenu i rabat mijenjate direktno na fakturi.'},
+  {tab: 'editor', sel: '#lookBtn', title: 'Izgled fakture', text: 'Dodajte logo, odaberite boju i slova ili premjestite blokove na fakturi. Važi za sve dokumente.'},
+  {tab: 'editor', sel: '#pdfBtn, #saveBtn', title: 'PDF i arhiva', text: '„PDF / Štampa“ pravi PDF za slanje kupcu. „Sačuvaj u arhivu“ čuva dokument i dodjeljuje sljedeći broj.'},
+  {tab: 'editor', sel: '.tabs', title: 'Arhiva i izvještaji', text: 'U Arhivi označavate plaćene fakture, pravite storno, avansne i ponavljajuće fakture. U Izvještajima su promet, PDV, Excel i e-KIF.'},
+  {tab: 'company', sel: '.backup', title: 'Sigurnosna kopija', text: 'Podaci postoje samo u ovom pregledniku. Redovno preuzmite kopiju i čuvajte je na sigurnom. Vodič možete ponovo pokrenuti dugmetom „?“.'}
+];
+let tourI = -1;
+function tourRect(st){
+  if (!st.sel) return null;
+  const rs = [...document.querySelectorAll(st.sel)].filter(e => e.getClientRects().length).map(e => e.getBoundingClientRect());
+  if (!rs.length) return null;
+  return {top: Math.min(...rs.map(r => r.top)), left: Math.min(...rs.map(r => r.left)), right: Math.max(...rs.map(r => r.right)), bottom: Math.max(...rs.map(r => r.bottom))};
+}
+function tourShow(i){
+  tourI = i; const st = TOUR[i];
+  if (layoutMode) setLayoutMode(false);
+  if (st.tab) { const tb = document.querySelector(`.tabs [data-tab="${st.tab}"]`); if (!tb.classList.contains('on')) tb.click(); }
+  const el = st.sel && document.querySelector(st.sel), phone = innerWidth <= 640;
+  if (el) { el.scrollIntoView({block: phone ? 'start' : 'center', inline: 'nearest'}); if (phone) scrollBy(0, -70); }
+  $('#tourTitle').textContent = st.title; $('#tourText').textContent = st.text; $('#tourStep').textContent = `${i + 1} / ${TOUR.length}`;
+  $('#tourBack').hidden = i === 0;
+  $('#tourNext').textContent = i === 0 ? 'Počnimo' : i === TOUR.length - 1 ? 'Završi' : 'Dalje';
+  $('#tour').hidden = false;
+  requestAnimationFrame(() => { tourPlace(); $('#tourNext').focus({preventScroll: true}); });
+}
+function tourPlace(){
+  if (tourI < 0) return;
+  const r = tourRect(TOUR[tourI]), spot = $('#tourSpot'), card = $('#tourCard'), vw = innerWidth, vh = innerHeight, pad = 8, gap = 14;
+  spot.classList.toggle('none', !r);
+  if (r) Object.assign(spot.style, {top: r.top - pad + 'px', left: r.left - pad + 'px', width: r.right - r.left + pad * 2 + 'px', height: r.bottom - r.top + pad * 2 + 'px'});
+  else Object.assign(spot.style, {top: vh / 2 + 'px', left: vw / 2 + 'px', width: '0px', height: '0px'});
+  if (vw <= 640) return;   // phones: the card sits at the bottom (CSS)
+  const cw = card.offsetWidth, ch = card.offsetHeight, clampX = x => Math.max(12, Math.min(vw - cw - 12, x));
+  let top, left;
+  if (!r) { top = (vh - ch) / 2; left = (vw - cw) / 2; }
+  else if (r.bottom + pad + gap + ch < vh - 12) { top = r.bottom + pad + gap; left = clampX(r.left); }
+  else if (r.top - pad - gap - ch > 12) { top = r.top - pad - gap - ch; left = clampX(r.left); }
+  else { top = Math.max(12, Math.min(vh - ch - 12, r.top)); left = r.right + pad + gap + cw < vw - 12 ? r.right + pad + gap : clampX(r.left - cw - pad - gap); }
+  card.style.top = top + 'px'; card.style.left = left + 'px';
+}
+function tourEnd(){
+  if (tourI < 0) return;
+  tourI = -1; $('#tour').hidden = true; S.tourDone = true; save();
+  document.querySelector('.tabs [data-tab="editor"]').click(); scrollTo(0, 0);
+}
+$('#tourNext').addEventListener('click', () => tourI >= TOUR.length - 1 ? tourEnd() : tourShow(tourI + 1));
+$('#tourBack').addEventListener('click', () => tourI > 0 && tourShow(tourI - 1));
+$('#tourSkip').addEventListener('click', tourEnd);
+$('#tourBtn').addEventListener('click', () => tourShow(0));
+addEventListener('resize', tourPlace);
+addEventListener('scroll', tourPlace, {passive: true});
+document.addEventListener('keydown', e => {
+  if (tourI < 0) return;
+  if (e.key === 'Escape') { e.preventDefault(); tourEnd(); }
+  if (e.key === 'ArrowRight') $('#tourNext').click();
+  if (e.key === 'ArrowLeft') $('#tourBack').click();
+});
+
 renderPalette(); renderCompany(); renderEditor(); renderArchive(); renderBackup();
+if (!S.tourDone && !S.invoices.length) setTimeout(() => tourShow(0), 600);   // first visit only
 })();
 </script>
 </body>
