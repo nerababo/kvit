@@ -31,6 +31,7 @@ Kvit je jedan HTML fajl. Nema servera, nema registracije, nema pretplate. Svi po
 - **PDF:** dugme „PDF / Štampa“ pravi čistu A4 fakturu (u dijalogu odaberite „Sačuvaj kao PDF“)
 - **Sigurnosna kopija:** preuzmite sve podatke kao jedan fajl i vratite ih na bilo kojem računaru (kartica „Moja firma“)
 - **Vodič za nove korisnike:** kratak obilazak u 8 koraka pri prvom otvaranju; ponovo se pokreće dugmetom „?“ u zaglavlju
+- **Svijetla i tamna tema:** dugme u zaglavlju (automatski prema sistemu, svijetla ili tamna); faktura i PDF ostaju bijeli
 - Radi na računaru i mobitelu (na mobitelu se stavke dodaju dugmetom +)
 
 ## Pokretanje
