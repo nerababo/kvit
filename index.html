@@ -16,7 +16,7 @@ img{max-width:100%}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
 <style>
 /* Layout: a supply shelf on the left (products, clients) and a sheet of invoice paper on the desk to the right; you drag from shelf to paper. */
 :root{
@@ -98,29 +98,68 @@ body.drag-line .removehint{display:block}
 .toolbar select{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:7px 10px}
 
 /* paper */
-.paper{position:relative; color-scheme:light; background:var(--paper); color:var(--paper-ink); border-radius:4px; padding:clamp(18px, 4vw, 44px); box-shadow:0 1px 0 rgba(0,0,0,.04), 0 12px 32px -12px rgba(20,24,60,.28); transition:box-shadow .15s}
+.paper{--p-body:var(--f-body); --p-display:var(--f-display); --p-num:var(--f-mono); --logo-h:64px; font-family:var(--p-body); position:relative; color-scheme:light; background:var(--paper); color:var(--paper-ink); border-radius:4px; padding:clamp(18px, 4vw, 44px); box-shadow:0 1px 0 rgba(0,0,0,.04), 0 12px 32px -12px rgba(20,24,60,.28); transition:box-shadow .15s}
 .paper.over{box-shadow:0 0 0 3px var(--stamp), 0 12px 32px -12px rgba(20,24,60,.28)}
 .paper.over-files::after{content:"Pustite CSV fajl da dodate stavke"; position:absolute; inset:0; display:grid; place-items:center; background:rgba(236,238,254,.92); color:var(--stamp); font-family:var(--f-display); font-size:20px; font-weight:700; border-radius:4px}
-.p-head{display:flex; justify-content:space-between; gap:24px; flex-wrap:wrap; padding-bottom:20px; border-bottom:2px solid var(--paper-ink)}
-.seller .co{font-family:var(--f-display); font-weight:700; font-size:22px; letter-spacing:-.01em; margin:0 0 4px}
+.seller .co{font-family:var(--p-display); font-weight:700; font-size:22px; letter-spacing:-.01em; margin:0 0 4px}
 .seller p{margin:0; color:var(--paper-muted); font-size:13px}
-.docid{text-align:right; min-width:0}
-.docid .kind{font-family:var(--f-display); font-weight:700; font-size:clamp(24px, 4vw, 32px); letter-spacing:.02em; color:var(--stamp); margin:0; line-height:1.1; text-transform:uppercase}
-.docid .no{font-family:var(--f-mono); font-size:15px; margin:2px 0 10px}
+.docid{min-width:0}
+.docid .kind{font-family:var(--p-display); font-weight:700; font-size:clamp(24px, 4vw, 32px); letter-spacing:.02em; color:var(--stamp); margin:0; line-height:1.1; text-transform:uppercase}
+.docid .no{font-family:var(--p-num); font-size:15px; margin:2px 0 10px}
 .dates{display:grid; grid-template-columns:auto auto; gap:4px 10px; justify-content:end; font-size:13px; align-items:center}
 .dates label{color:var(--paper-muted); text-align:right}
-.dates input{border:1px solid transparent; border-bottom-color:var(--paper-line); background:transparent; font-family:var(--f-mono); font-size:13px; padding:2px 0; color:var(--paper-ink)}
+.dates input{border:1px solid transparent; border-bottom-color:var(--paper-line); background:transparent; font-family:var(--p-num); font-size:13px; padding:2px 0; color:var(--paper-ink)}
 .dates input:hover{border-bottom-color:var(--stamp)}
 
-.parties{display:flex; gap:24px; padding-block:20px; flex-wrap:wrap}
-.buyer{flex:1 1 300px; min-height:96px; border:2px dashed var(--paper-line); border-radius:8px; padding:12px 14px; transition:border-color .15s, background .15s}
+.buyer{min-height:96px; border:2px dashed var(--paper-line); border-radius:8px; padding:12px 14px; transition:border-color .15s, background .15s}
 .buyer.filled{border-style:solid; border-color:transparent; background:#f6f7fb}
 .buyer.over{border-color:var(--stamp); border-style:dashed; background:var(--stamp-soft)}
 .lbl{display:block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--paper-muted); margin-bottom:4px; font-weight:600}
 .buyer .bn{font-weight:600; font-size:16px; margin:0}
 .buyer p{margin:0; font-size:13px; color:var(--paper-muted)}
 .buyer .ph{color:var(--paper-muted); margin:8px 0 0}
-.pdvnote{flex:0 1 220px; font-size:12.5px; color:var(--paper-muted); align-self:end}
+/* movable header blocks: one centred place on top, then two rows of two */
+.p-top{text-align:center; padding-bottom:18px; position:relative}
+.p-top.is-empty{display:none}
+.p-grid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.p-grid .slot:nth-child(odd){padding-right:14px}
+.p-grid .slot:nth-child(even){padding-left:14px}
+.slot{min-width:0; padding-block:18px; position:relative}
+.p-grid .slot:nth-child(-n+2){padding-top:0; border-bottom:2px solid var(--paper-ink)}
+.slot.r{text-align:right}
+.slot:not(.r) .dates{justify-content:start}
+.slot:not(.r) .dates label{text-align:left}
+.p-top .dates{justify-content:center}
+.blk{min-width:0; border-radius:6px}
+.blk-logo img{display:inline-block; max-width:100%; max-height:var(--logo-h); object-fit:contain; vertical-align:top}
+.blk-logo:not(.has-img){display:none}
+.blk-logo .ph{display:none}
+#blkTray{display:none}
+.paper.look-min .p-grid .slot:nth-child(-n+2){border-bottom-width:1px}
+.paper.look-min .docid .kind, .paper.look-min .totals .grand b{color:var(--paper-ink)}
+.paper.look-min .totals .grand{border-top-width:1px}
+.paper.look-min .lines th{border-bottom-color:var(--paper-line)}
+.paper.tot-left .sum{justify-content:flex-start}
+.paper.tot-left .words{text-align:left}
+.paper.sign-left .signrow{justify-content:flex-start}
+.paper.sign-center .signrow{justify-content:center}
+.paper.sign-none .signrow{display:none}
+.paper.no-mp .mp{display:none}
+.paper.no-mp .sign .ln{margin-top:44px}
+.paper.no-words .words{display:none}
+.paper.no-foot .p-foot{display:none}
+/* layout mode: places and blocks become visible and draggable */
+body.layout-mode .p-top, body.layout-mode .slot{outline:2px dashed var(--paper-line); outline-offset:5px; border-radius:6px; min-height:60px}
+body.layout-mode .p-top{display:block; margin-bottom:16px}
+body.layout-mode .p-top, body.layout-mode .p-grid .slot{margin-top:8px}
+body.layout-mode .p-top::before, body.layout-mode .slot::before{content:attr(data-label); position:absolute; top:-15px; left:6px; padding:0 5px; background:var(--paper); color:var(--paper-muted); font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; z-index:1}
+body.layout-mode .slot.r::before{left:auto; right:6px}
+body.layout-mode .p-top::before{left:50%; transform:translateX(-50%)}
+body.layout-mode .slot.over-slot{outline-color:var(--stamp); background:var(--stamp-soft)}
+body.layout-mode .blk{cursor:grab; transition:box-shadow .15s}
+body.layout-mode .blk:hover{box-shadow:0 0 0 2px var(--stamp), 0 0 0 6px var(--stamp-soft)}
+body.layout-mode .blk-logo{display:inline-block}
+body.layout-mode .blk-logo:not(.has-img) .ph{display:grid; place-items:center; min-height:56px; padding:8px 14px; border:1.5px dashed var(--paper-line); border-radius:6px; color:var(--paper-muted); font-size:12.5px}
 
 .tablebox{overflow-x:auto; margin-inline:-6px; padding-inline:6px}
 table.lines{width:100%; border-collapse:collapse; min-width:680px; font-size:13.5px}
@@ -132,14 +171,14 @@ table.lines{width:100%; border-collapse:collapse; min-width:680px; font-size:13.
 .lines tr.flash td{animation:flash .9s}
 @keyframes flash{from{background:var(--stamp-soft)} to{background:transparent}}
 .lines tr.dragsrc td{opacity:.35}
-.h{cursor:grab; color:var(--paper-muted); font-family:var(--f-mono); font-size:12px; white-space:nowrap; width:44px; user-select:none}
+.h{cursor:grab; color:var(--paper-muted); font-family:var(--p-num); font-size:12px; white-space:nowrap; width:44px; user-select:none}
 .h .dots{letter-spacing:-2px; margin-right:4px; color:var(--paper-line)}
 tr:hover .h .dots{color:var(--stamp)}
 .in{width:100%; border:1px solid transparent; background:transparent; padding:5px 4px; border-radius:5px; color:var(--paper-ink)}
 .in:hover{border-color:var(--paper-line)}
 .in:focus{border-color:var(--stamp); background:#fff; outline:none}
-.in.num{text-align:right; font-family:var(--f-mono); font-size:13px}
-td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums}
+.in.num{text-align:right; font-family:var(--p-num); font-size:13px; font-variant-numeric:tabular-nums}
+td.amt{font-family:var(--p-num); font-size:13px; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums}
 .x{border:0; background:transparent; color:var(--paper-muted); font-size:18px; width:28px; height:28px; border-radius:6px}
 .x:hover{background:#fbe0e3; color:#b32234}
 .c-name{width:34%} .c-unit{width:58px} .c-qty{width:72px} .c-price{width:100px} .c-disc{width:66px} .c-vat{width:66px} .c-amt{width:110px} .c-x{width:34px}
@@ -151,7 +190,7 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
 .totals{width:min(100%, 340px); display:grid; gap:4px; font-size:13.5px}
 .totals .row{display:flex; justify-content:space-between; gap:12px}
 .totals .row span{color:var(--paper-muted)}
-.totals .row b{font-family:var(--f-mono); font-weight:500; font-variant-numeric:tabular-nums}
+.totals .row b{font-family:var(--p-num); font-weight:500; font-variant-numeric:tabular-nums}
 .totals .grand{margin-top:6px; padding-top:10px; border-top:2px solid var(--paper-ink); align-items:baseline}
 .totals .grand span{color:var(--paper-ink); font-weight:600}
 .totals .grand b{font-size:20px; font-weight:500; color:var(--stamp)}
@@ -207,16 +246,19 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
   .card{flex:0 0 220px}
 }
 @media (max-width: 560px){
-  .docid{text-align:left}
-  .dates{justify-content:start}
-  .dates label{text-align:left}
+  .p-grid{grid-template-columns:minmax(0,1fr)}
+  .slot.r{text-align:left}
+  .p-grid .slot:nth-child(1){border-bottom:0; padding-bottom:8px}
+  .p-grid .slot:nth-child(odd), .p-grid .slot:nth-child(even){padding-inline:0}
+  .slot .dates{justify-content:start}
+  .slot .dates label{text-align:left}
   .cform{grid-template-columns:minmax(0,1fr)}
   .cform .wide{grid-column:span 1}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important; animation:none!important} }
 
 /* backup panel */
-.pdate{display:none; font-family:var(--f-mono); font-size:13px}
+.pdate{display:none; font-family:var(--p-num); font-size:13px}
 .ref{font-size:12.5px; color:var(--paper-muted); margin:-6px 0 10px}
 .ref:empty{display:none}
 .totals .adv span{color:var(--paper-ink)}
@@ -226,6 +268,35 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
 .pill.storno{background:var(--surface-2); color:var(--muted)}
 .arch .reftxt{display:block; font-size:12px; color:var(--muted)}
 .btn.link{border-color:transparent; color:var(--accent); padding-inline:6px}
+.lookpanel{display:none; flex-direction:column; gap:16px}
+body.layout-mode .palette > :not(.lookpanel){display:none!important}
+body.layout-mode .lookpanel{display:flex}
+.lookpanel h3{margin:0}
+.lk-sec{display:flex; flex-direction:column; gap:8px}
+.lk-h{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600}
+.tpls{display:grid; gap:6px}
+.tpl{display:flex; flex-direction:column; align-items:flex-start; gap:1px; text-align:left; padding:8px 10px; border:1px solid var(--line); border-radius:9px; background:var(--bg)}
+.tpl b{font-weight:600}
+.tpl span{font-size:12px; color:var(--muted)}
+.tpl.on, .fnt.on{border-color:var(--accent); background:var(--accent-soft)}
+.swatches{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.sw{width:28px; height:28px; border-radius:50%; border:2px solid var(--surface); box-shadow:0 0 0 1px var(--line); padding:0; flex:none}
+.sw.on{box-shadow:0 0 0 2px var(--fg)}
+.sw.custom{position:relative; overflow:hidden; background:conic-gradient(#e11d48, #f59e0b, #16a34a, #0284c7, #7c3aed, #e11d48); cursor:pointer}
+.sw.custom input{position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0}
+.fonts{display:grid; grid-template-columns:1fr 1fr; gap:6px}
+.fnt{padding:8px 10px; border:1px solid var(--line); border-radius:9px; background:var(--bg); text-align:left; min-width:0}
+.fnt b{display:block; font-size:21px; line-height:1.15; font-weight:600}
+.fnt span{font-size:12px; color:var(--muted)}
+.seg{display:flex; flex-wrap:wrap; gap:3px; background:var(--surface-2); padding:3px; border-radius:9px}
+.seg button{flex:1; border:0; background:transparent; border-radius:7px; padding:6px 8px; font-size:13px; color:var(--muted); font-weight:500}
+.seg button.on{background:var(--surface); color:var(--fg); box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.placegrid{display:grid; gap:8px}
+.placegrid label{display:grid; gap:3px; font-size:12.5px; color:var(--muted)}
+.placegrid select{background:var(--bg); border:1px solid var(--line); border-radius:7px; padding:6px 8px; color:var(--fg)}
+.lk-chk{display:flex; gap:8px; align-items:center; font-size:13.5px}
+.lk-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+#lookBtn.on{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
 .colmenu{position:relative}
 .colmenu summary{list-style:none; cursor:pointer}
 .colmenu summary::-webkit-details-marker{display:none}
@@ -304,6 +375,11 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
   .p-foot textarea{font-size:9pt}
   .signrow{margin-block:24px 18px; break-inside:avoid}
   .sum, .p-foot{break-inside:avoid}
+  .p-top, .slot{outline:0!important; min-height:0!important; margin-top:0!important; background:transparent!important; border-radius:0!important}
+  .p-top::before, .slot::before{display:none!important}
+  .blk{box-shadow:none!important}
+  .blk-logo:not(.has-img){display:none!important}
+  .p-top.is-empty{display:none!important}
   .hide-rn .lines th:first-child, .hide-rn .lines td.h{display:none}
   .amt .in.num{font-weight:400}
 }
@@ -355,6 +431,31 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
         </form>
       </details>
 
+      <div class="lookpanel" id="lookPanel" aria-label="Izgled dokumenata">
+        <div><h3>Izgled dokumenata</h3><p class="sub">Važi za sve fakture, predračune i ponude. Blokove na fakturi pomjerate prevlačenjem.</p></div>
+        <div class="lk-sec"><span class="lk-h">Predložak</span>
+          <div class="tpls" id="tplList">
+            <button class="tpl" data-tpl="klasicni"><b>Klasični</b><span>Plava boja, firma lijevo, dokument desno</span></button>
+            <button class="tpl" data-tpl="centar"><b>Logo u centru</b><span>Logo na vrhu, klasična slova</span></button>
+            <button class="tpl" data-tpl="minimalni"><b>Minimalni</b><span>Crno-bijelo, tanke linije</span></button>
+          </div>
+        </div>
+        <div class="lk-sec"><span class="lk-h">Logo</span>
+          <div class="lk-row"><label class="btn small" for="logoFile" id="logoAdd">Dodaj logo</label><input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden><button class="btn small" id="logoDel" hidden>Ukloni logo</button></div>
+          <div class="seg" id="logoSize" role="group" aria-label="Veličina loga"><button data-v="s">Mali</button><button data-v="m">Srednji</button><button data-v="l">Veliki</button></div>
+        </div>
+        <div class="lk-sec"><span class="lk-h">Boja</span><div class="swatches" id="swatches"></div></div>
+        <div class="lk-sec"><span class="lk-h">Slova</span><div class="fonts" id="fontPick"></div></div>
+        <div class="lk-sec"><span class="lk-h">Raspored blokova</span><div class="placegrid" id="placeList"></div></div>
+        <div class="lk-sec"><span class="lk-h">Ukupan iznos</span><div class="seg" id="totSide" role="group" aria-label="Položaj ukupnog iznosa"><button data-v="left">Lijevo</button><button data-v="right">Desno</button></div></div>
+        <div class="lk-sec"><span class="lk-h">Potpis</span><div class="seg" id="signPos" role="group" aria-label="Položaj potpisa"><button data-v="left">Lijevo</button><button data-v="center">Sredina</button><button data-v="right">Desno</button><button data-v="none">Bez</button></div>
+          <label class="lk-chk"><input type="checkbox" id="optMp"> Krug za pečat (M.P.)</label></div>
+        <div class="lk-sec"><span class="lk-h">Prikaži</span>
+          <label class="lk-chk"><input type="checkbox" id="optWords"> Iznos slovima</label>
+          <label class="lk-chk"><input type="checkbox" id="optFoot"> Podnožje (plaćanje i napomena)</label></div>
+        <div class="lk-row"><button class="btn small" id="lookReset">Vrati zadano</button><button class="btn small primary" id="lookDone">Gotovo</button></div>
+      </div>
+
       <div class="csvtip">Stavke iz Excela: sačuvajte kao CSV s kolonama <code>naziv;količina;cijena;PDV</code> i prevucite fajl na fakturu.</div>
     </aside>
 
@@ -373,6 +474,7 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
           <span class="count" id="editing"></span>
         </div>
         <div class="lft">
+          <button class="btn" id="lookBtn" aria-pressed="false">Uredi izgled</button>
           <details class="colmenu" id="colMenu">
             <summary class="btn">Kolone</summary>
             <div class="colpop" role="group" aria-label="Kolone na fakturi">
@@ -394,9 +496,10 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
       </div>
 
       <article class="paper" id="paper">
-        <header class="p-head">
-          <div class="seller" id="seller"></div>
-          <div class="docid">
+        <div class="slot p-top is-empty" data-slot="top" data-label="Vrh, sredina"></div>
+        <div class="p-grid">
+          <div class="slot" data-slot="tl" data-label="Prvi red lijevo"><div class="blk seller" id="seller" data-block="seller"></div></div>
+          <div class="slot r" data-slot="tr" data-label="Prvi red desno"><div class="blk docid" id="blkDoc" data-block="doc">
             <p class="kind" id="kind">Faktura</p>
             <p class="no">br. <span id="docNo"></span></p>
             <p class="ref" id="docRef"></p>
@@ -404,13 +507,11 @@ td.amt{font-family:var(--f-mono); font-size:13px; text-align:right; white-space:
               <label for="dDate">Datum izdavanja</label><span><input type="date" id="dDate"><span class="pdate" id="dDateP"></span></span>
               <label for="dDue">Rok plaćanja</label><span><input type="date" id="dDue"><span class="pdate" id="dDueP"></span></span>
             </div>
-          </div>
-        </header>
-
-        <div class="parties">
-          <div class="buyer" id="buyer"></div>
-          <div class="pdvnote" id="pdvNote"></div>
+          </div></div>
+          <div class="slot" data-slot="ml" data-label="Drugi red lijevo"><div class="blk buyer" id="buyer" data-block="buyer"></div></div>
+          <div class="slot r" data-slot="mr" data-label="Drugi red desno"></div>
         </div>
+        <div id="blkTray"><div class="blk blk-logo" id="blkLogo" data-block="logo"><img id="logoImg" alt="Logo firme"><span class="ph">Logo: dodajte ga u panelu lijevo</span></div></div>
 
         <div class="tablebox">
           <table class="lines">
@@ -603,7 +704,8 @@ let S;
 try { S = JSON.parse(localStorage.getItem(KEY)); } catch(e) { S = null; }
 if (!S || !S.draft) S = seed();
 S.recurring = S.recurring || [];
-function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+let saveWarned = false;
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); saveWarned = false; } catch(e) { if (!saveWarned) { saveWarned = true; setTimeout(() => toast('Memorija preglednika je puna. Uklonite logo ili preuzmite kopiju i obrišite stare dokumente.'), 50); } } }
 
 const toastEl = $('#toast'); let tt;
 function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => toastEl.classList.remove('show'), 2200); }
@@ -647,7 +749,7 @@ function renderPalette(){
 function renderHeader(){
   const c = S.company, d = S.draft;
   $('#seller').innerHTML = `<p class="co">${esc(c.name || 'Naziv vaše firme')}</p>
-    <p>${esc(c.addr)}</p><p>JIB: ${esc(c.jib)}${c.inPdv && c.pdv ? ' · PDV br.: ' + esc(c.pdv) : ''}</p>${c.email ? `<p>${esc(c.email)}</p>` : ''}`;
+    <p>${esc(c.addr)}</p><p>JIB: ${esc(c.jib)}${c.inPdv && c.pdv ? ' · PDV br.: ' + esc(c.pdv) : ''}</p>${c.email ? `<p>${esc(c.email)}</p>` : ''}${c.inPdv ? '' : '<p>Nije u sistemu PDV-a.</p>'}`;
   $('#kind').textContent = d.type;
   $('#docType').value = d.type;
   $('#docNo').textContent = d.number;
@@ -661,7 +763,6 @@ function renderHeader(){
     : c.bank ? `Uplatu izvršiti na račun <b>${esc(c.bank)}</b>, s pozivom na broj ${esc(d.number)}.` : '';
   $('#payBlock').hidden = !$('#bankLine').innerHTML;
   fitNote();
-  $('#pdvNote').textContent = c.inPdv ? '' : 'Obveznik nije u sistemu PDV-a.';
   document.querySelectorAll('.vatcol').forEach(el => el.hidden = !c.inPdv);
   applyCols();
   const tpl = d.tplId && S.recurring.find(x => x.id === d.tplId);
@@ -669,6 +770,7 @@ function renderHeader(){
   $('#saveBtn').textContent = tpl ? 'Sačuvaj ponavljajuću' : 'Sačuvaj u arhivu';
   $('#docType').disabled = !!tpl;
   if (tpl) $('#docNo').textContent = 'dodjeljuje se pri izdavanju';
+  applyLook();
 }
 function renderBuyer(){
   const b = $('#buyer'), c = S.draft.client;
@@ -942,6 +1044,138 @@ function makeStorno(o){
   if (!S.draft.id) S.draft.number = nextNo();
   save(); renderHeader(); toast(`${o.number} je stornirana storno fakturom ${rec.number}`);
 }
+
+// ---------- document look (company-wide) ----------
+const SLOTS = ['top', 'tl', 'tr', 'ml', 'mr'];
+const SLOT_NAME = {top: 'Vrh, sredina', tl: 'Prvi red lijevo', tr: 'Prvi red desno', ml: 'Drugi red lijevo', mr: 'Drugi red desno'};
+const BLOCK_NAME = {logo: 'Logo', seller: 'Vaša firma', doc: 'Dokument (naslov, broj, datumi)', buyer: 'Kupac'};
+const LOOK_DEF = {tpl: 'klasicni', color: '#3b41c4', font: 'moderni', min: false, logo: '', logoSize: 'm',
+  slots: {top: null, tl: 'seller', tr: 'doc', ml: 'buyer', mr: null}, tot: 'right', sign: 'right', mp: true, words: true, foot: true};
+const WITH_LOGO = {top: null, tl: 'logo', tr: 'doc', ml: 'seller', mr: 'buyer'};
+const TPLS = {
+  klasicni: {color: '#3b41c4', font: 'moderni', min: false, slots: LOOK_DEF.slots, withLogo: WITH_LOGO},
+  centar: {color: '#0f766e', font: 'klasicni', min: false, slots: {top: 'logo', tl: 'seller', tr: 'doc', ml: 'buyer', mr: null}},
+  minimalni: {color: '#1b1f2e', font: 'jednostavni', min: true, slots: LOOK_DEF.slots, withLogo: WITH_LOGO}
+};
+const FONTS = {
+  moderni: {name: 'Moderni', body: '"IBM Plex Sans", system-ui, sans-serif', display: '"Bricolage Grotesque", system-ui, sans-serif', num: '"IBM Plex Mono", ui-monospace, monospace'},
+  klasicni: {name: 'Klasični', body: '"Source Serif 4", Georgia, serif', display: '"Source Serif 4", Georgia, serif', num: '"Source Serif 4", Georgia, serif'},
+  uski: {name: 'Uski', body: '"IBM Plex Sans Condensed", "Arial Narrow", sans-serif', display: '"IBM Plex Sans Condensed", "Arial Narrow", sans-serif', num: '"IBM Plex Sans Condensed", "Arial Narrow", sans-serif'},
+  jednostavni: {name: 'Jednostavni', body: 'Arial, Helvetica, sans-serif', display: 'Arial, Helvetica, sans-serif', num: 'Arial, Helvetica, sans-serif'}
+};
+const COLORS = [['#3b41c4', 'Kvit plava'], ['#1b1f2e', 'Crna'], ['#0369a1', 'Plava'], ['#0f766e', 'Tirkizna'], ['#15803d', 'Zelena'], ['#b45309', 'Narandžasta'], ['#b91c1c', 'Crvena'], ['#7e22ce', 'Ljubičasta']];
+function look(){
+  const saved = S.company.look || {}, l = Object.assign({}, LOOK_DEF, saved);
+  const sl = Object.assign({}, LOOK_DEF.slots, saved.slots || {}), seen = new Set();
+  SLOTS.forEach(k => { if (!BLOCK_NAME[sl[k]] || seen.has(sl[k])) sl[k] = null; else seen.add(sl[k]); });
+  ['seller', 'doc', 'buyer'].forEach(b => { if (!seen.has(b)) { const k = SLOTS.find(x => x !== 'top' && !sl[x]) || SLOTS.find(x => !sl[x]); sl[k] = b; seen.add(b); } });
+  l.slots = sl; return l;
+}
+function setLook(patch){ S.company.look = Object.assign(look(), patch); save(); applyLook(); }
+const mixWhite = (hex, a) => { const n = parseInt(hex.slice(1), 16), ch = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v * a + 255 * (1 - a))); return '#' + ch.map(v => v.toString(16).padStart(2, '0')).join(''); };
+function applyLook(){
+  const l = look(), p = $('#paper'), f = FONTS[l.font] || FONTS.moderni;
+  p.style.setProperty('--stamp', l.color); p.style.setProperty('--stamp-soft', mixWhite(l.color, .12));
+  p.style.setProperty('--p-body', f.body); p.style.setProperty('--p-display', f.display); p.style.setProperty('--p-num', f.num);
+  p.style.setProperty('--logo-h', {s: '44px', m: '64px', l: '96px'}[l.logoSize] || '64px');
+  p.classList.toggle('look-min', !!l.min);
+  p.classList.toggle('tot-left', l.tot === 'left');
+  ['left', 'center', 'none'].forEach(v => p.classList.toggle('sign-' + v, l.sign === v));
+  p.classList.toggle('no-mp', !l.mp); p.classList.toggle('no-words', !l.words); p.classList.toggle('no-foot', !l.foot);
+  const img = $('#logoImg'); if (l.logo) { if (img.getAttribute('src') !== l.logo) img.src = l.logo; } else img.removeAttribute('src');
+  $('#blkLogo').classList.toggle('has-img', !!l.logo);
+  const blocks = {logo: $('#blkLogo'), seller: $('#seller'), doc: $('#blkDoc'), buyer: $('#buyer')};
+  Object.entries(blocks).forEach(([n, el]) => {
+    const k = SLOTS.find(x => l.slots[x] === n), host = k ? document.querySelector(`[data-slot="${k}"]`) : $('#blkTray');
+    if (el.parentElement !== host) host.appendChild(el);
+  });
+  document.querySelector('[data-slot="top"]').classList.toggle('is-empty', !l.slots.top || (l.slots.top === 'logo' && !l.logo));
+  syncLookPanel(l);
+}
+// move a block to a place; a block already there swaps into the old place (or the first free one)
+function placeBlock(name, to){
+  const l = look(), sl = {...l.slots}, from = SLOTS.find(k => sl[k] === name) || null;
+  if (from === to || !BLOCK_NAME[name]) return;
+  if (!to && name !== 'logo') return;
+  const occ = to ? sl[to] : null;
+  if (from) sl[from] = null;
+  if (to) sl[to] = name;
+  if (occ && occ !== name) { const k = from || SLOTS.find(x => !sl[x] && x !== to); if (k) sl[k] = occ; }
+  setLook({slots: sl});
+}
+function syncLookPanel(l){
+  document.querySelectorAll('#tplList .tpl').forEach(b => b.classList.toggle('on', b.dataset.tpl === l.tpl));
+  document.querySelectorAll('#swatches .sw[data-c]').forEach(b => b.classList.toggle('on', b.dataset.c === l.color));
+  const own = !COLORS.some(c => c[0] === l.color); $('#swCustom').classList.toggle('on', own); $('#colorPick').value = l.color;
+  document.querySelectorAll('#fontPick .fnt').forEach(b => b.classList.toggle('on', b.dataset.f === l.font));
+  [['#logoSize', l.logoSize], ['#totSide', l.tot], ['#signPos', l.sign]].forEach(([id, v]) => document.querySelectorAll(id + ' button').forEach(b => b.classList.toggle('on', b.dataset.v === v)));
+  $('#optMp').checked = l.mp; $('#optMp').disabled = l.sign === 'none'; $('#optWords').checked = l.words; $('#optFoot').checked = l.foot;
+  $('#logoDel').hidden = !l.logo; $('#logoAdd').textContent = l.logo ? 'Zamijeni logo' : 'Dodaj logo'; $('#logoSize').hidden = !l.logo;
+  $('#placeList').innerHTML = Object.keys(BLOCK_NAME).map(b => {
+    const cur = SLOTS.find(k => l.slots[k] === b) || '';
+    return `<label>${BLOCK_NAME[b]}<select data-place="${b}">${b === 'logo' ? `<option value=""${cur ? '' : ' selected'}>Ne prikazuj</option>` : ''}${SLOTS.map(k => `<option value="${k}"${k === cur ? ' selected' : ''}>${SLOT_NAME[k]}</option>`).join('')}</select></label>`;
+  }).join('');
+}
+$('#swatches').innerHTML = COLORS.map(([c, n]) => `<button class="sw" data-c="${c}" style="background:${c}" title="${n}" aria-label="${n}"></button>`).join('') +
+  '<label class="sw custom" id="swCustom" title="Vlastita boja"><input type="color" id="colorPick" aria-label="Vlastita boja"></label>';
+$('#fontPick').innerHTML = Object.entries(FONTS).map(([k, f]) => `<button class="fnt" data-f="${k}"><b style="font-family:${f.display.replace(/"/g, '&quot;')}">Aa 123</b><span>${f.name}</span></button>`).join('');
+let layoutMode = false;
+function setLayoutMode(on){
+  layoutMode = on; document.body.classList.toggle('layout-mode', on);
+  const b = $('#lookBtn'); b.textContent = on ? 'Završi uređivanje' : 'Uredi izgled'; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+  document.querySelectorAll('.blk').forEach(el => { el.draggable = on; if (on) { el.dataset.drag = 'block'; el.dataset.id = el.dataset.block; } else { delete el.dataset.drag; } });
+  if (on) { $('#palette').scrollTop = 0; if (matchMedia('(max-width: 880px)').matches) $('#palette').scrollIntoView({block: 'start'}); }
+}
+$('#lookBtn').addEventListener('click', () => setLayoutMode(!layoutMode));
+$('#lookDone').addEventListener('click', () => setLayoutMode(false));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && layoutMode) setLayoutMode(false); });
+$('#lookPanel').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.tpl) { const t = TPLS[b.dataset.tpl], l = look(); setLook({tpl: b.dataset.tpl, color: t.color, font: t.font, min: t.min, slots: {...(l.logo && t.withLogo ? t.withLogo : t.slots)}}); toast('Predložak je primijenjen'); }
+  if (b.dataset.c) setLook({color: b.dataset.c});
+  if (b.dataset.f) setLook({font: b.dataset.f});
+  const seg = b.closest('.seg');
+  if (seg && b.dataset.v) setLook({[{logoSize: 'logoSize', totSide: 'tot', signPos: 'sign'}[seg.id]]: b.dataset.v});
+  if (b.id === 'logoDel') { const sl = {...look().slots}; SLOTS.forEach(k => { if (sl[k] === 'logo') sl[k] = null; }); setLook({logo: '', slots: sl}); toast('Logo je uklonjen'); }
+  if (b.id === 'lookReset') { const keep = look().logo; S.company.look = {...LOOK_DEF, logo: keep, slots: {...(keep ? WITH_LOGO : LOOK_DEF.slots)}}; save(); applyLook(); toast('Vraćen je zadani izgled'); }
+});
+$('#lookPanel').addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.place) placeBlock(t.dataset.place, t.value || null);
+  if (t.id === 'optMp') setLook({mp: t.checked});
+  if (t.id === 'optWords') setLook({words: t.checked});
+  if (t.id === 'optFoot') setLook({foot: t.checked});
+});
+$('#colorPick').addEventListener('input', e => setLook({color: e.target.value}));
+function setLogo(url){
+  const sl = {...look().slots};
+  if (!SLOTS.some(k => sl[k] === 'logo')) { const k = !sl.top ? 'top' : SLOTS.find(x => !sl[x]); if (k) sl[k] = 'logo'; }
+  setLook({logo: url, slots: sl}); toast('Logo je dodan. Prevucite ga na fakturi gdje želite.');
+}
+$('#logoFile').addEventListener('change', e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  if (f.size > 5e6) { toast('Slika je veća od 5 MB. Odaberite manju.'); return; }
+  const rd = new FileReader();
+  rd.onload = () => {
+    if (f.type === 'image/svg+xml') { if (String(rd.result).length > 400000) { toast('SVG logo je prevelik. Probajte PNG.'); return; } setLogo(rd.result); return; }
+    const img = new Image();
+    img.onload = () => {   // shrink so the logo doesn't fill browser storage
+      const k = Math.min(1, 800 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      let url = c.toDataURL('image/png'); if (url.length > 450000) url = c.toDataURL('image/jpeg', .88);
+      setLogo(url);
+    };
+    img.onerror = () => toast('Ova slika se ne može otvoriti. Probajte PNG ili JPG.');
+    img.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+});
+document.querySelectorAll('[data-slot]').forEach(sl => {
+  sl.addEventListener('dragover', e => { if (!has(e, 'block')) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; sl.classList.add('over-slot'); });
+  sl.addEventListener('dragleave', e => { if (!sl.contains(e.relatedTarget)) sl.classList.remove('over-slot'); });
+  sl.addEventListener('drop', e => { if (!has(e, 'block')) return; e.preventDefault(); e.stopPropagation(); sl.classList.remove('over-slot'); placeBlock(e.dataTransfer.getData(MIME('block')), sl.dataset.slot); });
+});
 
 // ---------- column visibility (company-wide layout setting) ----------
 const COLS = ['rn', 'unit', 'qty', 'price', 'disc', 'vat'];
@@ -1349,16 +1583,17 @@ document.addEventListener('dragstart', e => {
   const k = el.dataset.drag;
   e.dataTransfer.setData(MIME(k), el.dataset.id);
   e.dataTransfer.setData('text/plain', el.textContent.trim());
-  e.dataTransfer.effectAllowed = k === 'line' ? 'move' : 'copy';
+  e.dataTransfer.effectAllowed = k === 'line' || k === 'block' ? 'move' : 'copy';
   document.body.classList.add('drag-' + k);
   if (k === 'line') { dragLine = +el.dataset.id; const tr = el.closest('tr'); try { e.dataTransfer.setDragImage(tr, 20, 20); } catch(_){} requestAnimationFrame(() => tr.classList.add('dragsrc')); }
 });
 document.addEventListener('dragend', () => {
-  document.body.classList.remove('drag-product', 'drag-client', 'drag-line');
+  document.body.classList.remove('drag-product', 'drag-client', 'drag-line', 'drag-block');
   clearMarks(); dragLine = null;
 });
 function clearMarks(){
   paper.classList.remove('over', 'over-files'); buyer.classList.remove('over'); palette.classList.remove('over-remove');
+  document.querySelectorAll('.over-slot').forEach(x => x.classList.remove('over-slot'));
   [...body.rows].forEach(r => r.classList.remove('ins-before', 'ins-after', 'dragsrc'));
 }
 function insertIndex(y){

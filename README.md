@@ -18,6 +18,7 @@ Kvit je jedan HTML fajl. Nema servera, nema registracije, nema pretplate. Svi po
 - **Avansna faktura:** napravite je iz predračuna, a na konačnoj fakturi avans se odbija po stopama PDV-a
 - **Storno faktura:** pogrešna faktura se ne briše nego stornira, storno dobija sljedeći broj i vezu na original
 - Automatski broj dokumenta, PDV po stopama, rabat po stavci
+- **Izgled dokumenata:** dugme „Uredi izgled“ – logo, boja, slova, tri gotova predloška (Klasični, Logo u centru, Minimalni), blokovi (logo, firma, dokument, kupac) se premještaju prevlačenjem, položaj ukupnog iznosa i potpisa, uključivanje iznosa slovima i podnožja
 - **Kolone po izboru:** meni „Kolone“ sakriva redni broj, jedinicu mjere, količinu, cijenu, rabat ili PDV % na svim dokumentima. Kad je cijena skrivena, iznos stavke se upisuje direktno
 - Iznos slovima („dvije hiljade … KM i 50/100“)
 - Podrška za firme izvan sistema PDV-a
@@ -65,7 +66,8 @@ PDV kolona nije obavezna (zadano 17%). Red zaglavlja se automatski preskače. Pr
 - [x] Izvoz u PDF
 - [x] Sigurnosna kopija (izvoz i uvoz JSON fajla)
 - [x] Avansna i storno faktura
-- [ ] Prilagođen izgled fakture: logo, boje, font i raspored blokova prevlačenjem (drag & drop), uz gotove predloške
+- [x] Prilagođen izgled fakture: logo, boje, font i raspored blokova prevlačenjem (drag & drop), uz gotove predloške
+- [ ] Ideja: okvir „Podaci za uplatu“ pored ukupnog iznosa i pečat „PLAĆENO“ na plaćenim fakturama
 - [ ] Vodič za nove korisnike: kratki interaktivni tutorijal pri prvom pokretanju (unos firme, prva faktura, drag & drop, PDF, sigurnosna kopija)
 - [x] Ponavljajuće fakture
 - [x] Izvještaji i KIF u Excelu
