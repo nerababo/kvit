@@ -20,8 +20,9 @@ img{max-width:100%}
 <style>
 /* Layout: a supply shelf on the left (products, clients) and a sheet of invoice paper on the desk to the right; you drag from shelf to paper. */
 :root{
-  --bg:#eceef4; --surface:#ffffff; --surface-2:#e1e4ee; --fg:#1b1f2e; --muted:#5b6278; --line:#cbd0de;
-  --accent:#3b41c4; --accent-soft:#e1e2fa; --on-accent:#ffffff;
+  --bg:#eef0f6; --surface:#ffffff; --surface-2:#e5e8f2; --fg:#171a2b; --muted:#575e78; --line:#d4d8e6;
+  --accent:#3b41c4; --accent-soft:#e3e4fb; --on-accent:#ffffff;
+  --top-bg:#262aa0; --top-fg:#ffffff; --top-muted:rgba(255,255,255,.72); --top-chip:rgba(255,255,255,.12); --shadow:0 1px 2px rgba(23,26,60,.05), 0 6px 18px -10px rgba(23,26,60,.18);
   --good:#1d7a4c; --good-bg:#dcf2e6; --warn:#9c5600; --warn-bg:#fbead2; --bad:#b32234; --bad-bg:#fbe0e3;
   --paper:#fffefa; --paper-ink:#1b1f2e; --paper-muted:#676d82; --paper-line:#dcdfe8; --stamp:#3b41c4; --stamp-soft:#eceefe;
   --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
@@ -29,10 +30,12 @@ img{max-width:100%}
   --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --top-bg:#1b1e4f; --top-fg:#ffffff; --top-muted:rgba(255,255,255,.7); --top-chip:rgba(255,255,255,.1); --shadow:0 1px 2px rgba(0,0,0,.3);
   --bg:#10121a; --surface:#191c27; --surface-2:#242837; --fg:#e6e8f0; --muted:#9aa0b7; --line:#2e3344;
   --accent:#8e93ff; --accent-soft:#272a52; --on-accent:#10121a;
   --good:#5ed29a; --good-bg:#16352a; --warn:#f0b25a; --warn-bg:#3a2a12; --bad:#ff8b99; --bad-bg:#3d1a21; color-scheme:dark } }
 :root[data-theme="dark"]{
+  --top-bg:#1b1e4f; --top-fg:#ffffff; --top-muted:rgba(255,255,255,.7); --top-chip:rgba(255,255,255,.1); --shadow:0 1px 2px rgba(0,0,0,.3);
   --bg:#10121a; --surface:#191c27; --surface-2:#242837; --fg:#e6e8f0; --muted:#9aa0b7; --line:#2e3344;
   --accent:#8e93ff; --accent-soft:#272a52; --on-accent:#10121a;
   --good:#5ed29a; --good-bg:#16352a; --warn:#f0b25a; --warn-bg:#3a2a12; --bad:#ff8b99; --bad-bg:#3d1a21; color-scheme:dark }
@@ -45,21 +48,24 @@ button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 
 /* top bar */
-.top{background:var(--surface); border-bottom:1px solid var(--line)}
+.top{background:var(--top-bg); color:var(--top-fg)}
 .topin{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding-block:12px}
 .brand{display:flex; align-items:baseline; gap:10px; font-family:var(--f-display); font-weight:700; font-size:22px; letter-spacing:-.01em}
-.brand small{font-family:var(--f-body); font-weight:400; font-size:13px; color:var(--muted); letter-spacing:0}
+.brand small{font-family:var(--f-body); font-weight:400; font-size:13px; color:var(--top-muted); letter-spacing:0}
 .mark{display:block; width:34px; height:34px; align-self:center; flex:none}
-.tabs{display:flex; gap:4px; background:var(--surface-2); padding:4px; border-radius:10px}
-.tabs button{border:0; background:transparent; padding:7px 14px; border-radius:7px; color:var(--muted); font-weight:500}
-.tabs button.on{background:var(--surface); color:var(--fg); box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.tabs{display:flex; gap:4px; background:var(--top-chip); padding:4px; border-radius:10px}
+.tabs button{display:flex; align-items:center; gap:6px; border:0; background:transparent; padding:7px 14px; border-radius:7px; color:var(--top-muted); font-weight:500}
+.tabs button:hover{color:var(--top-fg)}
+.tabs .ic{display:none}
+.tabs .count{color:inherit; opacity:.75}
+.tabs button.on{background:#fff; color:var(--top-bg); box-shadow:0 1px 2px rgba(0,0,0,.15)}
 .count{font-family:var(--f-mono); font-size:12px; color:var(--muted)}
 
 main{padding-block:20px 48px}
 
 /* editor */
 .editor{display:grid; grid-template-columns:290px minmax(0,1fr); gap:24px; align-items:start}
-.palette{position:sticky; top:16px; display:flex; flex-direction:column; gap:10px; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px; max-height:calc(100vh - 32px); overflow:auto; transition:background .15s, border-color .15s}
+.palette{position:sticky; top:16px; display:flex; flex-direction:column; gap:10px; background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:16px; max-height:calc(100vh - 32px); overflow:auto; transition:background .15s, border-color .15s}
 .palette h3{margin:6px 0 0; font-family:var(--f-display); font-size:16px; font-weight:700}
 .sub{margin:0; color:var(--muted); font-size:12.5px}
 .example{font-size:12.5px; background:var(--warn-bg); color:var(--warn); padding:8px 10px; border-radius:8px}
@@ -75,27 +81,37 @@ main{padding-block:20px 48px}
 .card .del{border:0; background:transparent; color:var(--muted); width:22px; flex:none; opacity:.0}
 .card:hover .del, .card:focus-within .del{opacity:1}
 .card.client .act{width:auto; padding:0 8px; font-size:12px}
-details{border-top:1px dashed var(--line); padding-top:8px}
-summary{cursor:pointer; color:var(--accent); font-weight:500; font-size:13px}
+.palette details{border-top:1px dashed var(--line); padding-top:8px}
+.palette summary{cursor:pointer; color:var(--accent); font-weight:500; font-size:13px}
 .mini{display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px}
 .mini input,.mini select{grid-column:span 2; min-width:0}
 .mini .half{grid-column:span 1}
 .field, .mini input, .mini select{background:var(--bg); border:1px solid var(--line); border-radius:7px; padding:7px 9px}
-.btn{border:1px solid var(--line); background:var(--surface); border-radius:8px; padding:8px 14px; font-weight:500}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:36px; border:1px solid var(--line); background:var(--surface); border-radius:9px; padding:0 14px; font-weight:500; line-height:1.2; color:var(--fg); white-space:nowrap; transition:border-color .15s, background .15s}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled:hover{border-color:var(--line)}
+.btn .ic{width:16px; height:16px; flex:none}
+.vh{position:absolute!important; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
 .btn.primary{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
-.btn.small{padding:5px 10px; font-size:13px}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{min-height:30px; padding:0 10px; font-size:13px}
 .mini .btn{grid-column:span 2}
 .csvtip{font-size:12.5px; color:var(--muted); border-top:1px dashed var(--line); padding-top:10px}
 .csvtip code{font-family:var(--f-mono); font-size:12px; background:var(--surface-2); padding:1px 4px; border-radius:4px}
+.sheetbar{display:none; position:sticky; top:-16px; z-index:2; align-items:center; justify-content:space-between; margin:-16px -16px 4px; padding:12px 16px; background:var(--surface); border-bottom:1px solid var(--line); border-radius:18px 18px 0 0; font-family:var(--f-display); font-size:16px}
+.backdrop{display:none; position:fixed; inset:0; z-index:55; background:rgba(10,12,28,.45)}
 .removehint{display:none; text-align:center; padding:14px; border:2px dashed var(--bad); color:var(--bad); background:var(--bad-bg); border-radius:10px; font-weight:500}
 body.drag-line .removehint{display:block}
 .palette.over-remove{border-color:var(--bad)}
 
 .desk{display:flex; flex-direction:column; gap:12px; min-width:0}
 .toolbar{display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between}
-.toolbar .lft{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.tb-l, .tb-r{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+#addBtn{display:none}
+.editing{margin:-4px 0 0; font-size:12.5px; color:var(--muted)}
+.editing:empty{display:none}
 .toolbar label{color:var(--muted); font-size:13px}
-.toolbar select{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:7px 10px}
+.toolbar select{min-height:36px; background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:0 10px; font-weight:500}
 
 /* paper */
 .paper{--p-body:var(--f-body); --p-display:var(--f-display); --p-num:var(--f-mono); --logo-h:64px; font-family:var(--p-body); position:relative; color-scheme:light; background:var(--paper); color:var(--paper-ink); border-radius:4px; padding:clamp(18px, 4vw, 44px); box-shadow:0 1px 0 rgba(0,0,0,.04), 0 12px 32px -12px rgba(20,24,60,.28); transition:box-shadow .15s}
@@ -103,6 +119,7 @@ body.drag-line .removehint{display:block}
 .paper.over-files::after{content:"Pustite CSV fajl da dodate stavke"; position:absolute; inset:0; display:grid; place-items:center; background:rgba(236,238,254,.92); color:var(--stamp); font-family:var(--f-display); font-size:20px; font-weight:700; border-radius:4px}
 .seller .co{font-family:var(--p-display); font-weight:700; font-size:22px; letter-spacing:-.01em; margin:0 0 4px}
 .seller p{margin:0; color:var(--paper-muted); font-size:13px}
+.seller .co, .buyer .bn{color:var(--paper-ink)}
 .docid{min-width:0}
 .docid .kind{font-family:var(--p-display); font-weight:700; font-size:clamp(24px, 4vw, 32px); letter-spacing:.02em; color:var(--stamp); margin:0; line-height:1.1; text-transform:uppercase}
 .docid .no{font-family:var(--p-num); font-size:15px; margin:2px 0 10px}
@@ -209,7 +226,7 @@ td.amt{font-family:var(--p-num); font-size:13px; text-align:right; white-space:n
 .mp{display:inline-block; border:1.5px solid var(--paper-line); border-radius:50%; width:56px; height:56px; line-height:53px; font-size:11px; margin-bottom:-24px; color:var(--paper-muted)}
 
 /* archive */
-.panel{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px}
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:22px; box-shadow:var(--shadow)}
 .panel h2{font-family:var(--f-display); margin:0 0 4px; font-size:22px}
 .figs{display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:12px; margin:16px 0 20px}
 .fig{border:1px solid var(--line); border-radius:10px; padding:12px 14px}
@@ -236,14 +253,17 @@ td.amt{font-family:var(--p-num); font-size:13px; text-align:right; white-space:n
 .cform .field{color:var(--fg)}
 .chk{flex-direction:row!important; align-items:center; gap:8px!important; color:var(--fg)!important}
 
-.toast{position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); transform:translate(-50%, 20px); background:var(--fg); color:var(--bg); padding:10px 16px; border-radius:9px; font-weight:500; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; max-width:calc(100% - 32px)}
+.toast{z-index:80; position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); transform:translate(-50%, 20px); background:var(--fg); color:var(--bg); padding:10px 16px; border-radius:9px; font-weight:500; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; max-width:calc(100% - 32px)}
 .toast.show{opacity:1; transform:translate(-50%, 0)}
 
 @media (max-width: 880px){
   .editor{grid-template-columns:minmax(0,1fr)}
-  .palette{position:static; max-height:none}
-  .cards{flex-direction:row; overflow-x:auto; padding-bottom:4px}
-  .card{flex:0 0 220px}
+  .palette{position:fixed; left:0; right:0; bottom:0; top:auto; z-index:60; max-height:min(80vh, 680px); border-radius:18px 18px 0 0; border-bottom:0; padding:16px max(16px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); transform:translateY(105%); visibility:hidden; transition:transform .25s ease, visibility 0s linear .25s; box-shadow:0 -14px 40px rgba(0,0,0,.28)}
+  body.sheet-open .palette{transform:none; visibility:visible; transition:transform .25s ease}
+  body.sheet-open{overflow:hidden}
+  body.sheet-open .backdrop{display:block}
+  .sheetbar{display:flex}
+  #addBtn{display:inline-flex}
 }
 @media (max-width: 560px){
   .p-grid{grid-template-columns:minmax(0,1fr)}
@@ -258,7 +278,13 @@ td.amt{font-family:var(--p-num); font-size:13px; text-align:right; white-space:n
 @media (prefers-reduced-motion: reduce){ *{transition:none!important; animation:none!important} }
 
 /* backup panel */
-.pdate{display:none; font-family:var(--p-num); font-size:13px}
+.dwrap{position:relative; display:inline-block}
+.dwrap input{position:absolute; inset:0; width:100%; height:100%; opacity:0; pointer-events:none}
+.pdate{display:inline-flex; align-items:center; gap:6px; border:0; border-bottom:1px solid var(--paper-line); background:transparent; padding:2px 0; font-family:var(--p-num); font-size:13px; color:var(--paper-ink); cursor:pointer}
+.pdate:hover{border-bottom-color:var(--stamp)}
+.pdate::after{content:""; width:12px; height:12px; background:var(--paper-muted); -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E") center/contain no-repeat}
+body.nopicker .dwrap input{position:static; opacity:1; pointer-events:auto; width:auto; height:auto}
+body.nopicker .pdate{display:none}
 .ref{font-size:12.5px; color:var(--paper-muted); margin:-6px 0 10px}
 .ref:empty{display:none}
 .totals .adv span{color:var(--paper-ink)}
@@ -269,8 +295,8 @@ td.amt{font-family:var(--p-num); font-size:13px; text-align:right; white-space:n
 .arch .reftxt{display:block; font-size:12px; color:var(--muted)}
 .btn.link{border-color:transparent; color:var(--accent); padding-inline:6px}
 .topr{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-.helpbtn{width:34px; height:34px; flex:none; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--muted); font-family:var(--f-display); font-weight:700; font-size:16px; line-height:1}
-.helpbtn:hover{color:var(--accent); border-color:var(--accent)}
+.helpbtn{width:34px; height:34px; flex:none; border-radius:50%; border:1px solid rgba(255,255,255,.35); background:transparent; color:var(--top-fg); font-family:var(--f-display); font-weight:700; font-size:16px; line-height:1}
+.helpbtn:hover{background:var(--top-chip); border-color:var(--top-fg)}
 .tour{position:fixed; inset:0; z-index:1000}
 .tour-spot{position:fixed; border-radius:10px; box-shadow:0 0 0 9999px rgba(10,12,28,.58); transition:top .25s, left .25s, width .25s, height .25s; pointer-events:none}
 .tour-spot::after{content:""; position:absolute; inset:-3px; border:2px solid var(--accent); border-radius:12px}
@@ -283,7 +309,7 @@ td.amt{font-family:var(--p-num); font-size:13px; text-align:right; white-space:n
 .tour-acts .sp{flex:1}
 @media (max-width: 640px){ .tour-card{left:12px!important; right:12px; top:auto!important; bottom:calc(12px + env(safe-area-inset-bottom, 0px)); width:auto} }
 .lookpanel{display:none; flex-direction:column; gap:16px}
-body.layout-mode .palette > :not(.lookpanel){display:none!important}
+body.layout-mode .palette > :not(.lookpanel):not(.sheetbar){display:none!important}
 body.layout-mode .lookpanel{display:flex}
 .lookpanel h3{margin:0}
 .lk-sec{display:flex; flex-direction:column; gap:8px}
@@ -312,7 +338,7 @@ body.layout-mode .lookpanel{display:flex}
 .lk-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
 #lookBtn.on{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
 .colmenu{position:relative}
-.colmenu summary{list-style:none; cursor:pointer}
+.colmenu summary{list-style:none; cursor:pointer; color:var(--fg); font-size:inherit}
 .colmenu summary::-webkit-details-marker{display:none}
 .colmenu[open] summary{border-color:var(--accent); color:var(--accent)}
 .colpop{position:absolute; right:0; top:calc(100% + 6px); z-index:20; width:240px; display:flex; flex-direction:column; gap:8px; padding:12px 14px; background:var(--surface); border:1px solid var(--line); border-radius:10px; box-shadow:0 12px 28px -12px rgba(20,24,60,.35)}
@@ -323,6 +349,20 @@ body.layout-mode .lookpanel{display:flex}
 .duebar{display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; justify-content:space-between; padding:10px 12px 10px 14px; border-radius:10px; background:var(--warn-bg); color:var(--warn); font-weight:500}
 .dueacts{display:flex; gap:6px; flex-wrap:wrap}
 .recpanel{margin-top:20px}
+.emptyline{display:none; margin:2px 0 0; color:var(--muted); font-size:13.5px}
+#recPanel.is-empty .emptyline{display:block}
+#recPanel.is-empty > .sub, #recPanel.is-empty .rectable{display:none}
+#recPanel.is-empty h2{font-size:18px}
+.acts{align-items:center}
+.rowmenu{position:relative; display:inline-block}
+.rowmenu summary{list-style:none; cursor:pointer; min-width:34px; font-size:16px; letter-spacing:1px}
+.rowmenu summary::-webkit-details-marker{display:none}
+.rowmenu[open] summary{border-color:var(--accent); color:var(--accent)}
+.rowpop{position:fixed; z-index:40; min-width:190px; display:flex; flex-direction:column; padding:6px; background:var(--surface); border:1px solid var(--line); border-radius:10px; box-shadow:0 14px 34px -12px rgba(0,0,0,.35)}
+.rowpop button{text-align:left; border:0; background:transparent; padding:8px 10px; border-radius:7px; font-size:13.5px; color:var(--fg); font-weight:500}
+.rowpop button:hover{background:var(--surface-2)}
+.rowpop button.danger{color:var(--bad)}
+.rowpop button.confirm{background:var(--bad-bg); color:var(--bad); font-weight:600}
 .bulkgrid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; margin-top:14px}
 .bulkgrid .repcard{display:flex; flex-direction:column; gap:10px}
 .steps{margin:0; padding-left:20px; color:var(--muted); font-size:13.5px; display:grid; gap:4px}
@@ -362,7 +402,27 @@ body.layout-mode .lookpanel{display:flex}
 .arch tr.tot td{font-weight:600; border-top:2px solid var(--fg); border-bottom:0}
 .arch td.bad{color:var(--bad)}
 @media (max-width: 880px){ .repgrid{grid-template-columns:minmax(0,1fr)} }
-@media (max-width: 560px){ .tabs button{padding:7px 9px} .tabs{flex-wrap:wrap} }
+@media (max-width: 720px){
+  .topin{flex-wrap:nowrap; padding-block:10px}
+  .brand small{display:none}
+  .tabs{position:fixed; left:0; right:0; bottom:0; z-index:50; display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:2px; border-radius:0; background:var(--surface); border-top:1px solid var(--line); padding:6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); box-shadow:0 -6px 20px -12px rgba(0,0,0,.25)}
+  .tabs button{flex-direction:column; gap:3px; padding:6px 2px; font-size:11.5px; color:var(--muted); white-space:nowrap}
+  .tabs button:hover{color:var(--fg)}
+  .tabs button .ic{display:block; width:22px; height:22px}
+  .tabs button.on{background:var(--accent-soft); color:var(--accent); box-shadow:none}
+  .tabs .count{display:none}
+  body{padding-bottom:calc(66px + env(safe-area-inset-bottom, 0px))}
+  .toast{bottom:calc(78px + env(safe-area-inset-bottom, 0px))}
+}
+@media (max-width: 560px){
+  .toolbar .btn .bl{display:none}
+  .toolbar .btn{padding:0 11px}
+  .toolbar{gap:8px}
+  body:not(.layout-mode) .p-grid .slot:empty{display:none}
+  .figs{grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px}
+  .fig{padding:10px 12px}
+  .fig b{font-size:16px}
+}
 .recform{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; margin:14px 0 18px; padding:14px; border:1px solid var(--accent); border-radius:10px; background:var(--accent-soft)}
 .recform label{display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); min-width:0}
 .recform .field{color:var(--fg); background:var(--surface)}
@@ -385,7 +445,7 @@ body.layout-mode .lookpanel{display:flex}
 @media print{
   :root{color-scheme:light}
   body{background:#fff!important}
-  .top, .palette, .toolbar, .duebar, .tour, #tab-archive, #tab-reports, #tab-company, .toast, .emptylines{display:none!important}
+  .top, .palette, .toolbar, .editing, .backdrop, .duebar, .tour, #tab-archive, #tab-reports, #tab-company, .toast, .emptylines{display:none!important}
   main{padding:0!important; max-width:none!important}
   .wrap{padding:0!important}
   .editor{display:block!important}
@@ -399,7 +459,8 @@ body.layout-mode .lookpanel{display:flex}
   .h .dots, .c-x, .lines td:last-child, .unadv{display:none}
   .in{border-color:transparent!important; padding:3px 0}
   .dates input{display:none!important}
-  .pdate{display:inline}
+  .pdate{display:inline; border:0; padding:0}
+  .pdate::after{display:none}
   .paper{background:#fff!important}
   .buyer{border:0!important; padding:0; background:transparent!important; min-height:0}
   .p-foot textarea{border-color:transparent!important; background:transparent!important; margin:0; padding:0; width:100%}
@@ -422,13 +483,13 @@ body.layout-mode .lookpanel{display:flex}
 <body>
 <header class="top">
   <div class="wrap topin">
-    <div class="brand"><svg class="mark" viewBox="0 0 150 150" role="img" aria-label="Kvit logo"><g transform="translate(10 10) rotate(-6 65 65)"><rect x="5" y="5" width="120" height="120" rx="26" fill="#3b41c4"/><g fill="#fff"><rect x="38" y="33" width="17" height="64"/><polygon points="51,67 79,33 99,33 51,91"/><polygon points="64,58 76,46 101,97 80,97"/></g></g></svg>Kvit <small>fakture bez pretplate</small></div>
+    <div class="brand"><svg class="mark" viewBox="0 0 150 150" role="img" aria-label="Kvit logo"><g transform="translate(10 10) rotate(-6 65 65)"><rect x="5" y="5" width="120" height="120" rx="26" fill="#fff"/><g fill="#262aa0"><rect x="38" y="33" width="17" height="64"/><polygon points="51,67 79,33 99,33 51,91"/><polygon points="64,58 76,46 101,97 80,97"/></g></g></svg>Kvit <small>fakture bez pretplate</small></div>
     <div class="topr">
     <nav class="tabs" aria-label="Glavni meni">
-      <button data-tab="editor" class="on">Nova faktura</button>
-      <button data-tab="archive">Arhiva <span class="count" id="archCount"></span></button>
-      <button data-tab="reports">Izvještaji</button>
-      <button data-tab="company">Moja firma</button>
+      <button data-tab="editor" class="on"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>Nova faktura</button>
+      <button data-tab="archive"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg><span>Arhiva <span class="count" id="archCount"></span></span></button>
+      <button data-tab="reports"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M2 20h20"/></svg>Izvještaji</button>
+      <button data-tab="company"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M8 7h4M8 11h4M8 15h4M2 21h20"/></svg>Moja firma</button>
     </nav>
     <button class="helpbtn" id="tourBtn" title="Vodič kroz Kvit" aria-label="Pokreni vodič kroz Kvit">?</button>
     </div>
@@ -437,7 +498,8 @@ body.layout-mode .lookpanel{display:flex}
 
 <main class="wrap">
   <section id="tab-editor" class="editor">
-    <aside class="palette" id="palette">
+    <aside class="palette" id="palette" aria-label="Stavke i kupci">
+      <div class="sheetbar"><b id="sheetTitle">Stavke i kupci</b><button class="btn small" id="sheetClose">Gotovo</button></div>
       <div class="removehint">Pustite ovdje da uklonite stavku</div>
       <div class="example" id="exampleNote" hidden>Ovo su primjer podaci. Unesite svoju firmu u kartici „Moja firma“.</div>
       <h3>Proizvodi i usluge</h3>
@@ -495,6 +557,7 @@ body.layout-mode .lookpanel{display:flex}
 
       <div class="csvtip">Stavke iz Excela: sačuvajte kao CSV s kolonama <code>naziv;količina;cijena;PDV</code> i prevucite fajl na fakturu.</div>
     </aside>
+    <div class="backdrop" id="backdrop"></div>
 
     <div class="desk">
       <div class="duebar" id="dueBar" hidden>
@@ -502,18 +565,16 @@ body.layout-mode .lookpanel{display:flex}
         <span class="dueacts"><button class="btn small" id="dueView">Pregledaj</button><button class="btn small primary" id="dueIssue">Izdaj sve</button></span>
       </div>
       <div class="toolbar">
-        <div class="lft">
-          <label for="docType">Dokument</label>
+        <div class="tb-l">
+          <label for="docType" class="vh">Vrsta dokumenta</label>
           <select id="docType">
             <option>Faktura</option><option>Predračun</option><option>Ponuda</option><option>Avansna faktura</option><option disabled>Storno faktura</option>
           </select>
           <select id="advPick" hidden aria-label="Odbij avans"></select>
-          <span class="count" id="editing"></span>
-        </div>
-        <div class="lft">
-          <button class="btn" id="lookBtn" aria-pressed="false">Uredi izgled</button>
+          <button class="btn" id="addBtn" aria-label="Dodaj stavku ili kupca"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="bl">Stavke i kupci</span></button>
+          <button class="btn" id="lookBtn" aria-pressed="false" aria-label="Uredi izgled"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.6 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4-4-7.4-9-7.4z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10.5" cy="7" r="1"/><circle cx="15.5" cy="7.5" r="1"/></svg><span class="bl">Uredi izgled</span></button>
           <details class="colmenu" id="colMenu">
-            <summary class="btn">Kolone</summary>
+            <summary class="btn" aria-label="Kolone"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></svg><span class="bl">Kolone</span></summary>
             <div class="colpop" role="group" aria-label="Kolone na fakturi">
               <p class="hint">Prikaži na svim dokumentima:</p>
               <label><input type="checkbox" data-col="rn"> Redni broj (#)</label>
@@ -526,11 +587,14 @@ body.layout-mode .lookpanel{display:flex}
               <p class="hint">Kad je cijena skrivena, iznos stavke upisujete direktno u kolonu Iznos.</p>
             </div>
           </details>
-          <button class="btn" id="newBtn">Nova</button>
-          <button class="btn" id="pdfBtn" title="Otvara dijalog za štampu. Odaberite „Sačuvaj kao PDF“.">PDF / Štampa</button>
-          <button class="btn primary" id="saveBtn">Sačuvaj u arhivu</button>
+        </div>
+        <div class="tb-r">
+          <button class="btn" id="newBtn" aria-label="Nova prazna faktura"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/></svg><span class="bl">Nova</span></button>
+          <button class="btn" id="pdfBtn" aria-label="PDF ili štampa" title="Otvara dijalog za štampu. Odaberite „Sačuvaj kao PDF“."><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg><span class="bl">PDF / Štampa</span></button>
+          <button class="btn primary" id="saveBtn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="sl">Sačuvaj u arhivu</span></button>
         </div>
       </div>
+      <p class="editing" id="editing"></p>
 
       <article class="paper" id="paper">
         <div class="slot p-top is-empty" data-slot="top" data-label="Vrh, sredina"></div>
@@ -541,8 +605,8 @@ body.layout-mode .lookpanel{display:flex}
             <p class="no">br. <span id="docNo"></span></p>
             <p class="ref" id="docRef"></p>
             <div class="dates">
-              <label for="dDate">Datum izdavanja</label><span><input type="date" id="dDate"><span class="pdate" id="dDateP"></span></span>
-              <label for="dDue">Rok plaćanja</label><span><input type="date" id="dDue"><span class="pdate" id="dDueP"></span></span>
+              <label for="dDate">Datum izdavanja</label><span class="dwrap"><input type="date" id="dDate" tabindex="-1"><button type="button" class="pdate" id="dDateP" aria-label="Promijeni datum izdavanja"></button></span>
+              <label for="dDue">Rok plaćanja</label><span class="dwrap"><input type="date" id="dDue" tabindex="-1"><button type="button" class="pdate" id="dDueP" aria-label="Promijeni rok plaćanja"></button></span>
             </div>
           </div></div>
           <div class="slot" data-slot="ml" data-label="Drugi red lijevo"><div class="blk buyer" id="buyer" data-block="buyer"></div></div>
@@ -588,6 +652,7 @@ body.layout-mode .lookpanel{display:flex}
 
     <div class="panel recpanel" id="recPanel">
       <h2>Ponavljajuće fakture</h2>
+      <p class="emptyline" id="recEmpty">Još nema ponavljajućih faktura. Pored fakture u arhivi otvorite meni <b>⋯</b> i odaberite <b>Ponavljaj</b>.</p>
       <p class="sub">Za usluge koje naplaćujete redovno, npr. održavanje, zakup ili pretplatu. Kad dođe datum, faktura vas čeka pri otvaranju Kvita i izdajete je jednim klikom.</p>
       <form class="recform" id="recForm" hidden>
         <p class="recsrc wide" id="recSrc"></p>
@@ -599,7 +664,7 @@ body.layout-mode .lookpanel{display:flex}
         <p class="hint wide">Na svakoj fakturi se ispisuje obračunski period. U nazivu stavke možete koristiti <code>{mjesec}</code> i <code>{godina}</code>, npr. „Održavanje za {mjesec} {godina}“.</p>
         <div class="recbtns wide"><button class="btn primary">Pokreni ponavljanje</button><button type="button" class="btn" id="recCancel">Odustani</button></div>
       </form>
-      <div style="overflow-x:auto"><table class="arch">
+      <div class="rectable" style="overflow-x:auto"><table class="arch">
         <thead><tr><th>Kupac</th><th>Stavke</th><th class="r">Iznos KM</th><th>Ponavljanje</th><th>Sljedeća</th><th>Status</th><th><span hidden>Akcije</span></th></tr></thead>
         <tbody id="recBody"></tbody>
       </table></div>
@@ -845,7 +910,7 @@ function renderHeader(){
   applyCols();
   const tpl = d.tplId && S.recurring.find(x => x.id === d.tplId);
   $('#editing').textContent = tpl ? `Uređujete ponavljajuću fakturu (${(EVERY[tpl.every] || '').toLowerCase()}, sljedeća ${bsDate(tpl.nextDate)})` : d.id ? 'Uređujete sačuvani dokument' : '';
-  $('#saveBtn').textContent = tpl ? 'Sačuvaj ponavljajuću' : 'Sačuvaj u arhivu';
+  $('#saveBtn .sl').textContent = tpl ? 'Sačuvaj ponavljajuću' : 'Sačuvaj u arhivu';
   $('#docType').disabled = !!tpl;
   if (tpl) $('#docNo').textContent = 'dodjeljuje se pri izdavanju';
   applyLook();
@@ -910,18 +975,35 @@ function status(inv){ if (inv.stornoBy) return 'storno'; if (inv.paid) return 'p
 const STATUS = {paid: 'Plaćena', open: 'Otvorena', late: 'Kasni', storno: 'Stornirana'};
 let confirmDel = null, confirmStorno = null;
 function rowActions(i){
-  const b = [];
-  if (i.type === 'Ponuda') b.push(`<button class="btn small link" data-mkinv="${i.id}">U fakturu</button>`);
-  if (i.type === 'Predračun') b.push(`<button class="btn small link" data-mkadv="${i.id}">Avansna faktura</button>`, `<button class="btn small link" data-mkinv="${i.id}">U fakturu</button>`);
-  if (i.type === 'Avansna faktura' && !i.stornoBy) b.push(`<button class="btn small link" data-mkfinal="${i.id}">Konačna faktura</button>`);
-  if (i.type === 'Faktura' && !i.stornoBy && !i.recurringId) b.push(`<button class="btn small link" data-mkrec="${i.id}">Ponavljaj</button>`);
-  b.push(`<button class="btn small" data-open="${i.id}">Otvori</button>`);
-  if (BILLED.includes(i.type) && !i.stornoBy) b.push(`<button class="btn small${confirmStorno === i.id ? ' danger' : ''}" data-storno="${i.id}">${confirmStorno === i.id ? 'Potvrdi storno' : 'Storniraj'}</button>`);
-  if (!i.stornoBy && !i.stornoOf) b.push(`<button class="btn small${confirmDel === i.id ? ' danger' : ''}" data-delinv="${i.id}">${confirmDel === i.id ? 'Potvrdi brisanje' : 'Obriši'}</button>`);
-  return b.join('');
+  const main = [], menu = [];
+  if (i.type === 'Ponuda' || i.type === 'Predračun') main.push(`<button class="btn small link" data-mkinv="${i.id}">U fakturu</button>`);
+  if (i.type === 'Predračun') menu.push(['mkadv', 'Avansna faktura']);
+  if (i.type === 'Avansna faktura' && !i.stornoBy) main.push(`<button class="btn small link" data-mkfinal="${i.id}">Konačna faktura</button>`);
+  main.push(`<button class="btn small" data-open="${i.id}">Otvori</button>`);
+  if (i.type === 'Faktura' && !i.stornoBy && !i.recurringId) menu.push(['mkrec', 'Ponavljaj']);
+  if (BILLED.includes(i.type) && !i.stornoBy) menu.push(['storno', confirmStorno === i.id ? 'Potvrdi storno' : 'Storniraj', confirmStorno === i.id ? 'confirm' : 'danger']);
+  if (!i.stornoBy && !i.stornoOf) menu.push(['delinv', confirmDel === i.id ? 'Potvrdi brisanje' : 'Obriši', confirmDel === i.id ? 'confirm' : 'danger']);
+  const open = confirmDel === i.id || confirmStorno === i.id;
+  return main.join('') + (menu.length ? `<details class="rowmenu"${open ? ' open' : ''}><summary class="btn small" aria-label="Više radnji za ${esc(i.number)}">⋯</summary><div class="rowpop" role="menu">${menu.map(([k, t, c]) => `<button role="menuitem" class="${c || ''}" data-${k}="${i.id}">${t}</button>`).join('')}</div></details>` : '');
 }
+// row menus float above the table (it scrolls sideways), so they are placed with fixed positioning
+function placeRowMenus(){
+  document.querySelectorAll('details.rowmenu[open]').forEach(d => {
+    const r = d.querySelector('summary').getBoundingClientRect(), pop = d.querySelector('.rowpop'), h = pop.offsetHeight, w = pop.offsetWidth;
+    pop.style.top = (r.bottom + 4 + h > innerHeight - 8 ? r.top - h - 4 : r.bottom + 4) + 'px';
+    pop.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px';
+  });
+}
+document.addEventListener('toggle', e => {
+  const d = e.target; if (!(d instanceof HTMLDetailsElement) || !d.classList.contains('rowmenu') || !d.open) return;
+  document.querySelectorAll('details.rowmenu[open]').forEach(x => { if (x !== d) x.open = false; });
+  placeRowMenus();
+}, true);
+document.addEventListener('click', e => { if (!e.target.closest('details.rowmenu')) document.querySelectorAll('details.rowmenu[open]').forEach(x => x.open = false); });
+addEventListener('scroll', () => document.querySelectorAll('details.rowmenu[open]').forEach(x => x.open = false), {passive: true});
 function renderArchive(){
   renderRecurring(); renderDue(); renderMulti();
+  requestAnimationFrame(placeRowMenus);
   const list = [...S.invoices].sort((a, b) => b.date.localeCompare(a.date) || parseInt(b.number) - parseInt(a.number));
   $('#archCount').textContent = S.invoices.length || '';
   const inv = S.invoices.filter(i => BILLED.includes(i.type) && !i.stornoBy);
@@ -980,7 +1062,7 @@ function flash(i){ const tr = $('#lineBody').rows[i]; if (tr) { tr.classList.rem
 $('#palette').addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
   if (t.dataset.add) addProduct(t.dataset.add);
-  if (t.dataset.pick) { pickClient(t.dataset.pick); toast('Kupac odabran'); }
+  if (t.dataset.pick) { pickClient(t.dataset.pick); toast('Kupac odabran'); setSheet(false); }
   if (t.dataset.delprod) { S.products = S.products.filter(p => p.id !== t.dataset.delprod); save(); renderPalette(); }
   if (t.dataset.delclient) { S.clients = S.clients.filter(c => c.id !== t.dataset.delclient); save(); renderPalette(); }
 });
@@ -1200,13 +1282,23 @@ $('#fontPick').innerHTML = Object.entries(FONTS).map(([k, f]) => `<button class=
 let layoutMode = false;
 function setLayoutMode(on){
   layoutMode = on; document.body.classList.toggle('layout-mode', on);
-  const b = $('#lookBtn'); b.textContent = on ? 'Završi uređivanje' : 'Uredi izgled'; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+  const b = $('#lookBtn'); b.querySelector('.bl').textContent = on ? 'Završi uređivanje' : 'Uredi izgled'; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
   document.querySelectorAll('.blk').forEach(el => { el.draggable = on; if (on) { el.dataset.drag = 'block'; el.dataset.id = el.dataset.block; } else { delete el.dataset.drag; } });
-  if (on) { $('#palette').scrollTop = 0; if (matchMedia('(max-width: 880px)').matches) $('#palette').scrollIntoView({block: 'start'}); }
+  $('#palette').scrollTop = 0; $('#sheetTitle').textContent = on ? 'Izgled dokumenata' : 'Stavke i kupci'; $('#lookBtn').setAttribute('aria-label', on ? 'Završi uređivanje' : 'Uredi izgled');
+  setSheet(on);
 }
 $('#lookBtn').addEventListener('click', () => setLayoutMode(!layoutMode));
 $('#lookDone').addEventListener('click', () => setLayoutMode(false));
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && layoutMode) setLayoutMode(false); });
+document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (layoutMode) setLayoutMode(false); else setSheet(false); });
+const sheetMq = matchMedia('(max-width: 880px)');
+function setSheet(open){ document.body.classList.toggle('sheet-open', !!open && sheetMq.matches); }
+sheetMq.addEventListener('change', () => { if (!sheetMq.matches) setSheet(false); });
+$('#addBtn').addEventListener('click', () => { if (layoutMode) setLayoutMode(false); $('#sheetTitle').textContent = 'Stavke i kupci'; setSheet(true); });
+const closeSheet = () => { if (layoutMode) setLayoutMode(false); else setSheet(false); };
+$('#sheetClose').addEventListener('click', closeSheet);
+$('#backdrop').addEventListener('click', closeSheet);
+if (!('showPicker' in HTMLInputElement.prototype)) document.body.classList.add('nopicker');
+['dDate', 'dDue'].forEach(id => $('#' + id + 'P').addEventListener('click', () => { const inp = $('#' + id); try { inp.showPicker(); } catch (_) { document.body.classList.add('nopicker'); inp.focus(); } }));
 $('#lookPanel').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.tpl) { const t = TPLS[b.dataset.tpl], l = look(); setLook({tpl: b.dataset.tpl, color: t.color, font: t.font, min: t.min, slots: {...(l.logo && t.withLogo ? t.withLogo : t.slots)}}); toast('Predložak je primijenjen'); }
@@ -1779,6 +1871,7 @@ function renderDue(){
 }
 function renderRecurring(){
   const t = today();
+  $('#recPanel').classList.toggle('is-empty', !S.recurring.length);
   $('#recBody').innerHTML = S.recurring.length ? S.recurring.map(r => {
     const due = r.active && r.nextDate <= t, tot = calc(r.lines, S.company.inPdv).total;
     const items = esc(r.lines[0] ? r.lines[0].name : '') + (r.lines.length > 1 ? ` <span class="sub">+${r.lines.length - 1}</span>` : '');
