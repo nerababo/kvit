@@ -68,6 +68,7 @@ PDV kolona nije obavezna (zadano 17%). Red zaglavlja se automatski preskače. Pr
 - [x] Sigurnosna kopija (izvoz i uvoz JSON fajla)
 - [x] Avansna i storno faktura
 - [x] Prilagođen izgled fakture: logo, boje, font i raspored blokova prevlačenjem (drag & drop), uz gotove predloške
+- [ ] Masovno izdavanje faktura: ista faktura za više kupaca odjednom ili uvoz iz Excela/CSV-a (kupac, stavke, iznosi)
 - [ ] Ideja: okvir „Podaci za uplatu“ pored ukupnog iznosa i pečat „PLAĆENO“ na plaćenim fakturama
 - [x] Vodič za nove korisnike: kratki interaktivni tutorijal pri prvom pokretanju (unos firme, prva faktura, drag & drop, PDF, sigurnosna kopija)
 - [x] Ponavljajuće fakture
