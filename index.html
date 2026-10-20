@@ -323,6 +323,26 @@ body.layout-mode .lookpanel{display:flex}
 .duebar{display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; justify-content:space-between; padding:10px 12px 10px 14px; border-radius:10px; background:var(--warn-bg); color:var(--warn); font-weight:500}
 .dueacts{display:flex; gap:6px; flex-wrap:wrap}
 .recpanel{margin-top:20px}
+.bulkgrid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; margin-top:14px}
+.bulkgrid .repcard{display:flex; flex-direction:column; gap:10px}
+.steps{margin:0; padding-left:20px; color:var(--muted); font-size:13.5px; display:grid; gap:4px}
+.dropzone{border:2px dashed var(--line); border-radius:10px; padding:14px; text-align:center; color:var(--muted); font-size:13px; transition:background .15s, border-color .15s}
+.dropzone.over{border-color:var(--accent); background:var(--accent-soft); color:var(--accent)}
+.clientpick{display:grid; gap:2px; max-height:220px; overflow:auto; border:1px solid var(--line); border-radius:8px; padding:6px}
+.cpick{display:flex; gap:8px; align-items:center; padding:5px 6px; border-radius:6px; font-size:13.5px; min-width:0}
+.cpick:hover{background:var(--surface-2)}
+.cpick .nm{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.cpick .sub{margin-left:auto; font-family:var(--f-mono); font-size:12px; flex:none}
+.bulkprev{margin-top:18px; border-top:1px solid var(--line); padding-top:14px; display:flex; flex-direction:column; gap:10px}
+.bulkprev h3{margin:0; font-family:var(--f-display); font-size:18px}
+.bulkprev p{margin:0}
+.bulkmsgs{margin:0; padding:0; list-style:none; display:grid; gap:4px; font-size:13px; max-height:240px; overflow:auto}
+.bulkmsgs:empty{display:none}
+.bulkmsgs li{padding:6px 10px; border-radius:7px}
+.bulkmsgs li.err{background:var(--bad-bg); color:var(--bad)}
+.bulkmsgs li.warn{background:var(--warn-bg); color:var(--warn)}
+.badge{display:inline-block; font-size:11px; font-weight:600; padding:1px 7px; border-radius:999px; background:var(--accent-soft); color:var(--accent); margin-left:6px; vertical-align:1px}
+@media (max-width: 880px){ .bulkgrid{grid-template-columns:minmax(0,1fr)} }
 .repbar{display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; justify-content:space-between; margin-top:14px}
 .chips{display:flex; flex-wrap:wrap; gap:6px}
 .chip{border:1px solid var(--line); background:var(--surface); border-radius:999px; padding:6px 12px; font-size:13px; font-weight:500; color:var(--muted)}
@@ -583,6 +603,38 @@ body.layout-mode .lookpanel{display:flex}
         <thead><tr><th>Kupac</th><th>Stavke</th><th class="r">Iznos KM</th><th>Ponavljanje</th><th>Sljedeća</th><th>Status</th><th><span hidden>Akcije</span></th></tr></thead>
         <tbody id="recBody"></tbody>
       </table></div>
+    </div>
+
+    <div class="panel recpanel" id="bulkPanel">
+      <h2>Masovno izdavanje</h2>
+      <p class="sub">Izdajte više dokumenata odjednom: iz Excel ili CSV fajla, ili isti dokument za više kupaca.</p>
+      <div class="bulkgrid">
+        <section class="repcard">
+          <h3>Iz Excel ili CSV fajla</h3>
+          <ol class="steps">
+            <li>Preuzmite predložak i popunite ga. Uputstvo i primjeri su u fajlu.</li>
+            <li>Učitajte popunjen fajl. Kvit prvo prikaže pregled i označi greške po redovima.</li>
+            <li>Izdajte ispravne dokumente jednim klikom.</li>
+          </ol>
+          <div class="lk-row"><button class="btn" id="tplBtn">Preuzmi predložak (.xlsx)</button><label class="btn primary" for="bulkFile">Učitaj popunjen fajl</label>
+            <input type="file" id="bulkFile" accept=".xlsx,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden></div>
+          <div class="dropzone" id="bulkDrop">ili prevucite fajl ovdje (.xlsx ili .csv)</div>
+        </section>
+        <section class="repcard">
+          <h3>Isti dokument za više kupaca</h3>
+          <p class="hint" id="multiInfo"></p>
+          <div class="clientpick" id="multiClients"></div>
+          <div class="lk-row"><button class="btn small" id="multiAll">Označi sve</button><button class="btn primary" id="multiIssue" disabled>Izdaj</button></div>
+        </section>
+      </div>
+      <div class="bulkprev" id="bulkPrev" hidden>
+        <h3>Pregled fajla <span class="sub" id="bulkFileName"></span></h3>
+        <p id="bulkSummary"></p>
+        <div class="scrollx"><table class="arch compact" id="bulkTable"></table></div>
+        <ul class="bulkmsgs" id="bulkMsgs"></ul>
+        <label class="lk-chk" id="bulkNewWrap"><input type="checkbox" id="bulkNew" checked> <span id="bulkNewTxt"></span></label>
+        <div class="lk-row"><button class="btn primary" id="bulkIssue">Izdaj</button><button class="btn" id="bulkCancel">Odustani</button></div>
+      </div>
     </div>
   </section>
 
@@ -869,7 +921,7 @@ function rowActions(i){
   return b.join('');
 }
 function renderArchive(){
-  renderRecurring(); renderDue();
+  renderRecurring(); renderDue(); renderMulti();
   const list = [...S.invoices].sort((a, b) => b.date.localeCompare(a.date) || parseInt(b.number) - parseInt(a.number));
   $('#archCount').textContent = S.invoices.length || '';
   const inv = S.invoices.filter(i => BILLED.includes(i.type) && !i.stornoBy);
@@ -1356,7 +1408,7 @@ function sheetXml(sh){
   const fr = sh.freeze || 0;
   const pane = fr ? `<pane ySplit="${fr}" topLeftCell="A${fr + 1}" activePane="bottomLeft" state="frozen"/>` : '';
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0">${pane}</sheetView></sheetViews>` +
-    `<cols>${sh.cols.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols><sheetData>${rows}</sheetData></worksheet>`;
+    `<cols>${sh.cols.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols><sheetData>${rows}</sheetData>${(sh.dv || []).length ? `<dataValidations count="${sh.dv.length}">${sh.dv.map(v => `<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="${v.ref}"><formula1>${xe('"' + v.list + '"')}</formula1></dataValidation>`).join('')}</dataValidations>` : ''}</worksheet>`;
 }
 function workbook(sheets){
   const ns = 'http://schemas.openxmlformats.org/', files = [];
@@ -1444,6 +1496,249 @@ $('#ekifBtn').addEventListener('click', () => {
   const f = buildEkif();
   downloadBlob(new Blob([f.text], {type: 'text/csv;charset=utf-8'}), f.name);
   toast(`e-KIF preuzet: ${f.count} ${form(f.count, 'dokument', 'dokumenta', 'dokumenata')}`);
+});
+
+// ---------- bulk issuing: Excel/CSV template and "same document for many clients" ----------
+const BULK_COLS = ['Faktura br. u fajlu *', 'Vrsta', 'Datum', 'Rok plaćanja (dana)', 'Kupac *', 'Adresa kupca', 'JIB kupca', 'PDV broj kupca', 'Stavka *', 'Jed. mjere', 'Količina', 'Cijena bez PDV-a *', 'Rabat %', 'PDV %', 'Napomena'];
+function buildTemplateXlsx(){
+  const t = today(), H = BULK_COLS.map(X.h);
+  const rows = [H,
+    [X.i(1), 'Faktura', X.d(t), X.i(15), 'PRIMJER Tehno servis d.o.o.', 'Titova 12, 71000 Sarajevo', '4201111111111', '201111111111', 'Izrada web stranice', 'kom', X.i(1), X.m(1200), X.i(0), X.i(17), 'Hvala na saradnji.'],
+    [X.i(2), 'Faktura', '', X.i(30), 'PRIMJER Kafe bar Most', 'Mostarska 3, 88000 Mostar', '4202222222222', '', 'Održavanje stranice za {mjesec}', 'mj', X.i(1), X.m(150), X.i(0), X.i(17), ''],
+    [X.i(2), '', '', '', '', '', '', '', 'Hosting i domena', 'god', X.i(1), X.m(96), X.i(10), X.i(17), ''],
+    [X.i(2), '', '', '', '', '', '', '', 'Konsultacije', 'h', X.i(3), X.m(60), X.i(0), X.i(17), '']];
+  const guide = [[X.t('Kako popuniti predložak')], [],
+    [X.b('Osnovno')],
+    ['Jedan red je jedna stavka. Redovi s istim brojem u koloni „Faktura br. u fajlu“ čine jedan dokument.'],
+    ['Podatke o kupcu, vrstu, datum, rok i napomenu dovoljno je upisati u prvi red dokumenta.'],
+    ['Obavezne kolone su označene zvjezdicom: Faktura br. u fajlu, Kupac, Stavka i Cijena bez PDV-a.'],
+    ['Broj dokumenta u Kvitu dodjeljuje se automatski pri izdavanju, redom kako su dokumenti u fajlu.'], [],
+    [X.b('Prazna polja')],
+    ['Vrsta: Faktura. Datum: dan učitavanja. Rok plaćanja: 15 dana. Jed. mjere: kom. Količina: 1. Rabat: 0. PDV: 17.'], [],
+    [X.b('Brojevi i datumi')],
+    ['Brojevi: 1200, 1.200,50 ili 1200.50. Datumi: 20.10.2026. ili kao datum u Excelu.'],
+    ['U nazivu stavke možete pisati {mjesec} i {godina}; zamjenjuju se mjesecom i godinom datuma dokumenta.'], [],
+    [X.b('Kupci')],
+    ['Kupac se prepoznaje po JIB-u ili po tačnom nazivu iz lista „Klijenti“. Nove kupce Kvit može dodati u listu klijenata pri učitavanju.'], [],
+    [X.b('Prije učitavanja')],
+    ['Obrišite primjer redove (kupac počinje sa „PRIMJER“). Kvit ih neće izdati.'],
+    ['Fajl možete sačuvati i kao CSV (UTF-8, odvojeno tačka-zarezom) s istim kolonama istim redom.']];
+  return workbook([
+    {name: 'Fakture', freeze: 1, cols: [12, 12, 12, 11, 30, 30, 15, 15, 32, 9, 10, 14, 9, 8, 30], rows,
+      dv: [{ref: 'B2:B2000', list: 'Faktura,Predračun,Ponuda'}, {ref: 'N2:N2000', list: '17,0'}]},
+    {name: 'Uputstvo', cols: [120], rows: guide},
+    {name: 'Klijenti', freeze: 1, cols: [34, 34, 16, 16], rows: [['Naziv', 'Adresa', 'JIB', 'PDV broj'].map(X.h), ...S.clients.map(c => [c.name, c.addr || '', c.jib || '', c.pdv || ''])]},
+    {name: 'Proizvodi', freeze: 1, cols: [34, 10, 14, 8], rows: [['Naziv', 'Jed. mjere', 'Cijena bez PDV-a', 'PDV %'].map(X.h), ...S.products.map(x => [x.name, x.unit, X.m(x.price), X.i(x.vat)])]}
+  ]);
+}
+$('#tplBtn').addEventListener('click', () => { downloadBlob(buildTemplateXlsx(), 'Kvit-predlozak-masovno-izdavanje.xlsx'); toast('Predložak je preuzet'); });
+
+// read .xlsx without a library: central directory + the browser's own inflate
+async function unzipFile(buf){
+  const u8 = new Uint8Array(buf), dv = new DataView(buf), dec = new TextDecoder();
+  let e = -1; for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new Error('notzip');
+  const files = {}; let p = dv.getUint32(e + 16, true);
+  for (let k = 0, n = dv.getUint16(e + 10, true); k < n; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) throw new Error('notzip');
+    const nl = dv.getUint16(p + 28, true);
+    files[dec.decode(u8.subarray(p + 46, p + 46 + nl))] = {m: dv.getUint16(p + 10, true), size: dv.getUint32(p + 20, true), off: dv.getUint32(p + 42, true)};
+    p += 46 + nl + dv.getUint16(p + 30, true) + dv.getUint16(p + 32, true);
+  }
+  return async name => {
+    const f = files[name]; if (!f) return null;
+    const start = f.off + 30 + dv.getUint16(f.off + 26, true) + dv.getUint16(f.off + 28, true), data = u8.subarray(start, start + f.size);
+    if (f.m === 0) return dec.decode(data);
+    if (f.m !== 8 || typeof DecompressionStream === 'undefined') throw new Error('inflate');
+    return dec.decode(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+  };
+}
+const xmlDoc = t => new DOMParser().parseFromString(t, 'application/xml');
+const tagsNS = (el, n) => [...el.getElementsByTagNameNS('*', n)];
+const colNo = ref => { let n = 0; for (const ch of ref.replace(/\d+/g, '')) n = n * 26 + ch.toUpperCase().charCodeAt(0) - 64; return n - 1; };
+async function readXlsx(buf){
+  const get = await unzipFile(buf), wb = xmlDoc(await get('xl/workbook.xml')), rels = xmlDoc(await get('xl/_rels/workbook.xml.rels'));
+  const sheets = tagsNS(wb, 'sheet').map(x => ({name: x.getAttribute('name') || '', rid: x.getAttribute('r:id') || x.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id')}));
+  const pick = sheets.find(x => /faktur/i.test(x.name)) || sheets[0];
+  const rel = tagsNS(rels, 'Relationship').find(r => r.getAttribute('Id') === pick.rid);
+  let target = rel.getAttribute('Target'); target = target.startsWith('/') ? target.slice(1) : 'xl/' + target.replace(/^\.\//, '');
+  const ssT = await get('xl/sharedStrings.xml');
+  const ss = ssT ? tagsNS(xmlDoc(ssT), 'si').map(si => tagsNS(si, 't').map(t => t.textContent).join('')) : [];
+  const out = []; let rn = 0;
+  tagsNS(xmlDoc(await get(target)), 'row').forEach(r => {
+    rn = +r.getAttribute('r') || rn + 1; const cells = []; let cn = -1;
+    tagsNS(r, 'c').forEach(c => {
+      const ref = c.getAttribute('r'); cn = ref ? colNo(ref) : cn + 1;
+      const t = c.getAttribute('t'), v = tagsNS(c, 'v')[0], vt = v ? v.textContent : '';
+      cells[cn] = t === 's' ? ss[+vt] : t === 'inlineStr' ? tagsNS(c, 't').map(x => x.textContent).join('') : (t === 'str' || t === 'e' || t === 'd') ? vt : t === 'b' ? vt === '1' : v ? Number(vt) : '';
+    });
+    out.push({n: rn, cells});
+  });
+  return out;
+}
+function readCsv(text){
+  text = text.replace(/^﻿/, '');
+  const head = text.split(/\r?\n/)[0], sep = [';', '\t', ','].map(c => [c, head.split(c).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const rows = []; let row = [], f = '', q = false, line = 1, start = 1;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else { if (ch === '\n') line++; f += ch; } }
+    else if (ch === '"') q = true;
+    else if (ch === sep) { row.push(f); f = ''; }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(f); rows.push({n: start, cells: row}); row = []; f = ''; line++; start = line; }
+    else f += ch;
+  }
+  if (f !== '' || row.length) { row.push(f); rows.push({n: start, cells: row}); }
+  return rows;
+}
+
+// turn sheet rows into documents, with row-level problems
+const cellStr = v => v == null ? '' : String(v).trim();
+const cellNum = (v, def) => v === '' || v == null ? def : typeof v === 'number' ? v : parseNum(v);
+function cellDate(v){
+  if (v === '' || v == null) return today();
+  if (typeof v === 'number') return v > 59 && v < 100000 ? iso(new Date(Date.UTC(1899, 11, 30) + Math.round(v) * 864e5)) : null;
+  const s2 = String(v).trim(); let m;
+  if ((m = s2.match(/^(\d{4})-(\d{2})-(\d{2})/))) return validYmd(+m[1], +m[2], +m[3]);
+  if ((m = s2.match(/^(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\.?$/))) return validYmd(+m[3], +m[2], +m[1]);
+  return null;
+}
+function validYmd(y, mo, d){ return mo >= 1 && mo <= 12 && d >= 1 && d <= new Date(y, mo, 0).getDate() ? `${y}-${p2(mo)}-${p2(d)}` : null; }
+const TYPES = {faktura: 'Faktura', 'predračun': 'Predračun', predracun: 'Predračun', ponuda: 'Ponuda'};
+function parseBulk(rows){
+  const msgs = [], add = (row, level, text) => msgs.push({row, level, text});
+  const hi = rows.findIndex(r => /kupac/i.test(cellStr(r.cells[4])) || /stavk/i.test(cellStr(r.cells[8])));
+  if (hi < 0) return {error: 'U fajlu nema reda sa zaglavljem kolona (Kupac, Stavka…). Koristite Kvit predložak.'};
+  const groups = new Map(), inPdv = S.company.inPdv;
+  rows.slice(hi + 1).forEach(r => {
+    const c = r.cells; if (!c.some(v => cellStr(v) !== '')) return;
+    const key = cellStr(c[0]);
+    if (!key) { add(r.n, 'err', 'nedostaje „Faktura br. u fajlu“, red ne pripada nijednom dokumentu'); return; }
+    let g = groups.get(key);
+    if (!g) groups.set(key, g = {key, first: r.n, rows: [], f: {}, items: [], bad: false});
+    g.rows.push(r.n);
+    [['type', 1], ['date', 2], ['due', 3], ['name', 4], ['addr', 5], ['jib', 6], ['pdv', 7], ['note', 14]].forEach(([k, i]) => {
+      const v = c[i]; if (cellStr(v) === '') return;
+      if (!(k in g.f)) g.f[k] = {v, row: r.n};
+      else if (cellStr(g.f[k].v) !== cellStr(v)) add(r.n, 'warn', `drugačija vrijednost u koloni „${BULK_COLS[i].replace(' *', '')}“ nego ranije u istom dokumentu; koristi se ona iz reda ${g.f[k].row}`);
+    });
+    const name = cellStr(c[8]), qty = cellNum(c[10], 1), price = cellNum(c[11], NaN), disc = cellNum(c[12], 0), vat = cellNum(c[13], 17);
+    let ok = true;
+    if (!name) { add(r.n, 'err', 'nedostaje naziv stavke'); ok = false; }
+    if (isNaN(price)) { add(r.n, 'err', cellStr(c[11]) ? `cijena „${cellStr(c[11])}“ nije broj` : 'nedostaje cijena'); ok = false; }
+    if (isNaN(qty)) { add(r.n, 'err', `količina „${cellStr(c[10])}“ nije broj`); ok = false; }
+    if (isNaN(disc) || disc < 0 || disc > 100) { add(r.n, 'err', 'rabat mora biti broj od 0 do 100'); ok = false; }
+    if (isNaN(vat) || vat < 0 || vat > 100) { add(r.n, 'err', 'PDV % mora biti broj, npr. 17 ili 0'); ok = false; }
+    if (!ok) g.bad = true;
+    else g.items.push({pid: null, name, unit: cellStr(c[9]) || 'kom', qty, price, disc, vat: inPdv ? vat : 0});
+  });
+  const lastInv = S.invoices.filter(i => i.type === 'Faktura').reduce((a, i) => i.date > a ? i.date : a, '');
+  const docs = [...groups.values()].map(g => {
+    const f = k => g.f[k] ? g.f[k].v : '', at = k => g.f[k] ? g.f[k].row : g.first;
+    const tRaw = cellStr(f('type')), type = tRaw ? TYPES[tRaw.toLowerCase()] : 'Faktura';
+    if (!type) { add(at('type'), 'err', `vrsta „${tRaw}“ nije poznata; upišite Faktura, Predračun ili Ponuda`); g.bad = true; }
+    const date = cellDate(f('date'));
+    if (!date) { add(at('date'), 'err', `datum „${cellStr(f('date'))}“ nije ispravan; upišite npr. 20.10.2026.`); g.bad = true; }
+    const due = cellNum(f('due'), 15);
+    if (isNaN(due) || due < 0 || due > 365) { add(at('due'), 'err', 'rok plaćanja mora biti broj dana, npr. 15'); g.bad = true; }
+    const name = cellStr(f('name')), jib = cellStr(f('jib')).replace(/\D/g, ''), pdv = cellStr(f('pdv')).replace(/\D/g, '');
+    if (!name) { add(g.first, 'err', 'nedostaje naziv kupca (upišite ga u prvi red dokumenta)'); g.bad = true; }
+    else if (/^primjer\b/i.test(name)) { add(g.first, 'err', 'primjer red iz predloška; obrišite ga ili upišite pravog kupca'); g.bad = true; }
+    if (jib && jib.length !== 13) add(at('jib'), 'warn', `JIB „${cellStr(f('jib'))}“ nema 13 cifara`);
+    if (pdv && pdv.length !== 12) add(at('pdv'), 'warn', `PDV broj „${cellStr(f('pdv'))}“ nema 12 cifara; kupac će se voditi kao neobveznik PDV-a`);
+    if (!g.items.length && !g.bad) { add(g.first, 'err', 'dokument nema nijednu stavku'); g.bad = true; }
+    if (type === 'Faktura' && date && lastInv && date < lastInv) add(g.first, 'warn', `datum ${bsDate(date)} je raniji od posljednje izdane fakture (${bsDate(lastInv)}); provjerite redoslijed`);
+    const known = S.clients.find(x => jib && String(x.jib || '').replace(/\D/g, '') === jib) || S.clients.find(x => x.name.trim().toLowerCase() === name.toLowerCase());
+    const client = known ? {...known, pdv: known.pdv || (pdv.length === 12 ? pdv : '')} : {id: uid(), name, addr: cellStr(f('addr')), jib, pdv: pdv.length === 12 ? pdv : ''};
+    const lines = g.items.map(l => ({...l, name: date ? fillPeriod(l.name, date) : l.name}));
+    return {key: g.key, rows: g.rows, ok: !g.bad, type, date, dueDays: Math.round(due), client, isNew: !known, lines, note: cellStr(f('note')), total: calc(lines, inPdv).total};
+  });
+  return {docs, msgs: msgs.sort((a, b) => a.row - b.row || (a.level === 'err' ? -1 : 1)), items: docs.reduce((a, d) => a + d.lines.length, 0)};
+}
+let bulk = null;
+async function loadBulkFile(file){
+  try {
+    let rows;
+    if (/\.xls$/i.test(file.name)) { toast('Stari format .xls nije podržan. U Excelu odaberite „Sačuvaj kao“ → .xlsx ili CSV.'); return; }
+    if (/\.xlsx$/i.test(file.name)) rows = await readXlsx(await file.arrayBuffer());
+    else rows = readCsv(await file.text());
+    const res = parseBulk(rows);
+    if (res.error) { toast(res.error); return; }
+    bulk = {...res, file: file.name}; renderBulk();
+    $('#bulkPrev').scrollIntoView({behavior: smooth(), block: 'start'});
+  } catch (e) {
+    toast(String(e && e.message) === 'inflate' ? 'Ovaj preglednik ne može otvoriti .xlsx. Sačuvajte fajl kao CSV ili otvorite Kvit u novijem pregledniku.' : 'Fajl se ne može pročitati. Koristite Kvit predložak (.xlsx) ili CSV.');
+  }
+}
+function renderBulk(){
+  const box = $('#bulkPrev'); box.hidden = !bulk; if (!bulk) return;
+  const ok = bulk.docs.filter(d => d.ok), bad = bulk.docs.length - ok.length, newC = ok.filter(d => d.isNew);
+  const newNames = [...new Set(newC.map(d => d.client.name))];
+  $('#bulkFileName').textContent = bulk.file;
+  $('#bulkSummary').textContent = `Pronađeno ${bulk.docs.length} ${form(bulk.docs.length, 'dokument', 'dokumenta', 'dokumenata')} sa ${bulk.items} ${form(bulk.items, 'stavkom', 'stavke', 'stavki')}. ` +
+    (bad ? `Spremno za izdavanje: ${ok.length}. S greškom: ${bad} (neće biti ${bad === 1 ? 'izdan' : 'izdani'} dok se fajl ne ispravi).` : 'Svi su spremni za izdavanje.');
+  $('#bulkTable').innerHTML = `<thead><tr><th>Br. u fajlu</th><th>Redovi</th><th>Vrsta</th><th>Kupac</th><th>Datum</th><th class="r">Stavki</th><th class="r">Iznos KM</th><th>Status</th></tr></thead><tbody>` +
+    bulk.docs.map(d => `<tr><td class="mono">${esc(d.key)}</td><td class="mono">${d.rows.length > 1 ? d.rows[0] + '–' + d.rows[d.rows.length - 1] : d.rows[0]}</td><td>${esc(d.type || '?')}</td>
+      <td>${esc(d.client.name || '–')}${d.isNew && d.client.name ? '<span class="badge">novi</span>' : ''}</td><td class="mono">${d.date ? bsDate(d.date) : '?'}</td>
+      <td class="num">${d.lines.length}</td><td class="num">${d.ok ? fmt(d.total) : '–'}</td><td><span class="pill ${d.ok ? 'paid' : 'late'}">${d.ok ? 'Spremno' : 'Greška'}</span></td></tr>`).join('') + '</tbody>';
+  $('#bulkMsgs').innerHTML = bulk.msgs.map(m => `<li class="${m.level}">Red ${m.row}: ${esc(m.text)}</li>`).join('');
+  $('#bulkNewWrap').hidden = !newNames.length;
+  $('#bulkNewTxt').textContent = `Dodaj ${newNames.length === 1 ? 'novog kupca' : newNames.length + ' nova kupca'} u listu klijenata (${newNames.slice(0, 3).join(', ')}${newNames.length > 3 ? ' …' : ''})`;
+  const b = $('#bulkIssue'); b.disabled = !ok.length;
+  b.textContent = ok.length ? `Izdaj ${ok.length} ${form(ok.length, 'dokument', 'dokumenta', 'dokumenata')}` : 'Nema ispravnih dokumenata';
+}
+function issueDocs(list){   // list: [{type, date, due, client, lines, note}]
+  const nums = [];
+  list.forEach(d => {
+    const t = calc(d.lines, S.company.inPdv);
+    const rec = {id: uid(), type: d.type, number: nextNo(), date: d.date, due: d.due, client: JSON.parse(JSON.stringify(d.client)), lines: JSON.parse(JSON.stringify(d.lines)),
+      advances: [], ref: '', note: d.note || '', total: t.total, vatRows: t.rows.map(r => ({rate: r.rate, base: r.base})), paid: false};
+    S.invoices.push(rec); S.seq++; nums.push(rec.number);
+  });
+  if (!S.draft.id && !S.draft.tplId) S.draft.number = nextNo();
+  save(); renderHeader(); renderArchive();
+  return nums;
+}
+$('#bulkIssue').addEventListener('click', () => {
+  if (!bulk) return;
+  const ok = bulk.docs.filter(d => d.ok); if (!ok.length) return;
+  if ($('#bulkNew').checked) ok.filter(d => d.isNew).forEach(d => { if (!S.clients.some(c => c.id === d.client.id || c.name.toLowerCase() === d.client.name.toLowerCase())) S.clients.push({id: d.client.id, name: d.client.name, addr: d.client.addr, jib: d.client.jib, pdv: d.client.pdv}); });
+  const nums = issueDocs(ok.map(d => ({type: d.type, date: d.date, due: addDays(d.date, d.dueDays), client: d.client, lines: d.lines, note: d.note})));
+  bulk = null; renderBulk(); renderPalette();
+  toast(`Izdano ${nums.length} ${form(nums.length, 'dokument', 'dokumenta', 'dokumenata')}: br. ${nums[0]}${nums.length > 1 ? ' – ' + nums[nums.length - 1] : ''}`);
+  $('#archBody').closest('.panel').scrollIntoView({behavior: smooth(), block: 'start'});
+});
+$('#bulkCancel').addEventListener('click', () => { bulk = null; renderBulk(); });
+$('#bulkFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) loadBulkFile(f); });
+const dz = $('#bulkDrop');
+dz.addEventListener('dragover', e => { if (!has(e, 'Files')) return; e.preventDefault(); e.stopPropagation(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => { if (!has(e, 'Files')) return; e.preventDefault(); e.stopPropagation(); dz.classList.remove('over'); const f = e.dataTransfer.files[0]; if (f) loadBulkFile(f); });
+
+// same document for many clients, taken from the draft in the editor
+const multiSel = new Set();
+function renderMulti(){
+  const d = S.draft, n = d.lines.length, allowed = ['Faktura', 'Predračun', 'Ponuda'].includes(d.type) && !d.tplId;
+  const days = Math.max(0, Math.round((new Date(d.due) - new Date(d.date)) / 864e5)) || 15;
+  [...multiSel].forEach(id => { if (!S.clients.some(c => c.id === id)) multiSel.delete(id); });
+  $('#multiInfo').textContent = !allowed ? 'Otvorite fakturu, predračun ili ponudu u kartici „Nova faktura“; njene stavke se šalju odabranim kupcima.'
+    : !n ? 'Prvo dodajte stavke na dokument u kartici „Nova faktura“. Te stavke dobija svaki odabrani kupac.'
+    : `Šalje se dokument iz kartice „Nova faktura“: ${d.type}, ${n} ${form(n, 'stavka', 'stavke', 'stavki')}, ${fmt(calc(d.lines, S.company.inPdv).total)} KM po kupcu. Datum je današnji, rok ${days} dana.`;
+  $('#multiClients').innerHTML = S.clients.length ? S.clients.map(c => `<label class="cpick"><input type="checkbox" value="${c.id}"${multiSel.has(c.id) ? ' checked' : ''}><span class="nm">${esc(c.name)}</span><span class="sub">${esc(c.jib || '')}</span></label>`).join('')
+    : '<p class="sub">Još nema klijenata. Dodajte ih u kartici „Nova faktura“.</p>';
+  const k = multiSel.size, b = $('#multiIssue');
+  b.disabled = !allowed || !n || !k;
+  b.textContent = k ? `Izdaj ${k} ${form(k, 'dokument', 'dokumenta', 'dokumenata')}` : 'Odaberite kupce';
+  $('#multiAll').textContent = k && k === S.clients.length ? 'Poništi izbor' : 'Označi sve';
+}
+$('#multiClients').addEventListener('change', e => { const c = e.target; if (!c.value) return; c.checked ? multiSel.add(c.value) : multiSel.delete(c.value); renderMulti(); });
+$('#multiAll').addEventListener('click', () => { if (multiSel.size === S.clients.length) multiSel.clear(); else S.clients.forEach(c => multiSel.add(c.id)); renderMulti(); });
+$('#multiIssue').addEventListener('click', () => {
+  const d = S.draft, t = today(), days = Math.max(0, Math.round((new Date(d.due) - new Date(d.date)) / 864e5)) || 15;
+  const list = S.clients.filter(c => multiSel.has(c.id)).map(c => ({type: d.type, date: t, due: addDays(t, days), client: c, lines: d.lines.map(l => ({...l, name: fillPeriod(l.name, t)})), note: d.note}));
+  if (!list.length) return;
+  const nums = issueDocs(list); multiSel.clear(); renderMulti();
+  toast(`Izdano ${nums.length} ${form(nums.length, 'dokument', 'dokumenta', 'dokumenata')}: br. ${nums[0]}${nums.length > 1 ? ' – ' + nums[nums.length - 1] : ''}`);
 });
 
 // ---------- recurring invoices ----------

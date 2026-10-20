@@ -23,6 +23,7 @@ Kvit je jedan HTML fajl. Nema servera, nema registracije, nema pretplate. Svi po
 - Iznos slovima („dvije hiljade … KM i 50/100“)
 - Podrška za firme izvan sistema PDV-a
 - Arhiva s pregledom: fakturisano, naplaćeno, otvoreno, kasni
+- **Masovno izdavanje (Arhiva):** preuzmite Excel predložak s uputstvom i primjerima, popunite ga i učitajte (.xlsx ili CSV). Kvit prikaže pregled, označi greške po redovima i izda samo ispravne dokumente; novi kupci se mogu dodati u listu klijenata. Ili izdajte isti dokument za više odabranih kupaca odjednom
 - **Ponavljajuće fakture:** mjesečno, kvartalno, polugodišnje ili godišnje. Kad dođe datum, faktura čeka pri otvaranju Kvita i izdaje se jednim klikom, s obračunskim periodom na fakturi. U nazivu stavke radi `{mjesec}` i `{godina}`
 - **Izvještaji:** promet po mjesecima, PDV po stopama, najbolji kupci i dugovanja po kašnjenju (1–30, 31–60, 61–90, preko 90 dana)
 - **Excel (.xlsx):** knjiga izlaznih faktura (KIF), promet, PDV, kupci i dugovanja, s pravim datumima i formatom brojeva
@@ -68,7 +69,7 @@ PDV kolona nije obavezna (zadano 17%). Red zaglavlja se automatski preskače. Pr
 - [x] Sigurnosna kopija (izvoz i uvoz JSON fajla)
 - [x] Avansna i storno faktura
 - [x] Prilagođen izgled fakture: logo, boje, font i raspored blokova prevlačenjem (drag & drop), uz gotove predloške
-- [ ] Masovno izdavanje faktura: ista faktura za više kupaca odjednom ili uvoz iz Excela/CSV-a (kupac, stavke, iznosi)
+- [x] Masovno izdavanje faktura: ista faktura za više kupaca odjednom ili uvoz iz Excela/CSV-a (kupac, stavke, iznosi)
 - [ ] Ideja: okvir „Podaci za uplatu“ pored ukupnog iznosa i pečat „PLAĆENO“ na plaćenim fakturama
 - [x] Vodič za nove korisnike: kratki interaktivni tutorijal pri prvom pokretanju (unos firme, prva faktura, drag & drop, PDF, sigurnosna kopija)
 - [x] Ponavljajuće fakture
